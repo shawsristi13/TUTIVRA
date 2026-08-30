@@ -1,10 +1,19 @@
 from dataclasses import dataclass, field
 
+from app.database.database import (
+    get_or_create_student,
+    load_topic_progress,
+    save_topic_progress,
+)
+
 
 @dataclass
 class StudentModel:
     name: str
     level: str = "beginner"
+
+    # Database student ID
+    student_id: int | None = None
 
     # Overall learning information
     mastery: dict = field(default_factory=dict)
@@ -31,6 +40,76 @@ class StudentModel:
         if topic not in self.correct_answers:
             self.correct_answers[topic] = 0
 
+    def load_from_database(self, topic: str):
+        """
+        Load the student's saved progress for a topic.
+
+        If no progress exists yet, initialize the topic
+        with default values.
+        """
+
+        # Get existing student or create one.
+        student = get_or_create_student(
+            name=self.name,
+            level=self.level,
+        )
+
+        self.student_id = student[0]
+
+        # Keep the database version of the student's level.
+        self.level = student[2]
+
+        # Load topic progress.
+        progress = load_topic_progress(
+            student_id=self.student_id,
+            topic=topic,
+        )
+
+        # No saved progress yet.
+        if progress is None:
+            self.initialize_topic(topic)
+            return
+
+        mastery, attempts, correct_answers, misconceptions = progress
+
+        self.mastery[topic] = mastery
+        self.attempts[topic] = attempts
+        self.correct_answers[topic] = correct_answers
+
+        # Convert database text back into a list.
+        if misconceptions:
+            self.misconceptions[topic] = [
+                item.strip()
+                for item in misconceptions.split("\n")
+                if item.strip()
+            ]
+        else:
+            self.misconceptions[topic] = []
+
+    def save_to_database(self, topic: str):
+        """Save the current topic progress to SQLite."""
+
+        # Make sure student exists in database.
+        if self.student_id is None:
+
+            student = get_or_create_student(
+                name=self.name,
+                level=self.level,
+            )
+
+            self.student_id = student[0]
+
+        self.initialize_topic(topic)
+
+        save_topic_progress(
+            student_id=self.student_id,
+            topic=topic,
+            mastery=self.mastery[topic],
+            attempts=self.attempts[topic],
+            correct_answers=self.correct_answers[topic],
+            misconceptions=self.misconceptions[topic],
+        )
+
     def update_from_evaluation(
         self,
         topic: str,
@@ -45,8 +124,7 @@ class StudentModel:
         correct=None  -> evaluation/system failure
         """
 
-        # If the evaluator failed, do NOT modify
-        # the student's learning data.
+        # If the evaluator failed, don't modify learning data.
         if correct is None:
             return
 
@@ -56,10 +134,8 @@ class StudentModel:
 
         if correct:
 
-            # Student answered correctly.
             self.correct_answers[topic] += 1
 
-            # Increase mastery.
             self.mastery[topic] = min(
                 100.0,
                 self.mastery[topic] + 15.0,
@@ -67,13 +143,11 @@ class StudentModel:
 
         else:
 
-            # Student answered incorrectly.
             self.mastery[topic] = max(
                 0.0,
                 self.mastery[topic] - 5.0,
             )
 
-            # Store the misconception.
             if misconception:
 
                 if misconception not in self.misconceptions[topic]:

@@ -1,7 +1,6 @@
 from app.ai.evaluator import evaluate_answer
 from app.ai.adaptation import generate_adaptive_response
 from app.student.student_model import StudentModel
-from app.adaptation.difficulty_engine import get_adaptation_decision
 
 
 class LearningSession:
@@ -9,6 +8,9 @@ class LearningSession:
     def __init__(self, student: StudentModel, topic: str):
         self.student = student
         self.topic = topic
+
+        # Load previous progress when the session starts.
+        self.student.load_from_database(self.topic)
 
     def process_answer(
         self,
@@ -19,10 +21,7 @@ class LearningSession:
         language: str = "English",
     ):
 
-        # ---------------------------------------------
         # 1. Evaluate the student's answer
-        # ---------------------------------------------
-
         evaluation = evaluate_answer(
             topic=self.topic,
             question=question,
@@ -31,58 +30,41 @@ class LearningSession:
             student_level=self.student.level,
         )
 
-        # ---------------------------------------------
-        # 2. Update the Student Model
-        # ---------------------------------------------
+        # 2. Determine whether the evaluation itself failed.
+        if evaluation.get("system_error") is True:
 
+            correct = None
+
+        else:
+
+            correct = evaluation.get("correct")
+
+            if not isinstance(correct, bool):
+                correct = None
+
+        # 3. Update the Student Model
         self.student.update_from_evaluation(
             topic=self.topic,
-            correct=evaluation.get("correct"),
-            misconception=evaluation.get("misconception", ""),
-        )
-
-        # ---------------------------------------------
-        # 3. Get updated student state
-        # ---------------------------------------------
-
-        student_state = self.student.get_summary(self.topic)
-
-        # ---------------------------------------------
-        # 4. Check whether evaluation failed
-        # ---------------------------------------------
-
-        if evaluation.get("system_error"):
-
-            return {
-                "evaluation": evaluation,
-                "student_state": student_state,
-                "adaptation": None,
-                "adaptive_response": None,
-            }
-
-        # ---------------------------------------------
-        # 5. Decide the next difficulty
-        # ---------------------------------------------
-
-        adaptation = get_adaptation_decision(
-            mastery=student_state["mastery"],
-            attempts=student_state["attempts"],
-            correct_answers=student_state["correct_answers"],
-            misconception_detected=evaluation.get(
-                "misconception_detected",
-                False,
+            correct=correct,
+            misconception=evaluation.get(
+                "misconception",
+                "",
             ),
         )
 
-        # ---------------------------------------------
-        # 6. Generate adaptive teaching response
-        # ---------------------------------------------
+        # 4. Save updated progress only if evaluation succeeded.
+        if correct is not None:
+            self.student.save_to_database(self.topic)
 
-        if evaluation.get("correct"):
+        # 5. Get updated student state
+        student_state = self.student.get_summary(self.topic)
+
+        # 6. Decide what to do next
+        if correct is True:
 
             adaptive_response = None
 
-        else:
+        elif correct is False:
 
             adaptive_response = generate_adaptive_response(
                 topic=self.topic,
@@ -93,13 +75,12 @@ class LearningSession:
                 language=language,
             )
 
-        # ---------------------------------------------
-        # 7. Return complete learning decision
-        # ---------------------------------------------
+        else:
+
+            adaptive_response = None
 
         return {
             "evaluation": evaluation,
             "student_state": student_state,
-            "adaptation": adaptation,
             "adaptive_response": adaptive_response,
         }
