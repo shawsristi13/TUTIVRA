@@ -1,77 +1,64 @@
-from app.rag.document_loader import extract_text_from_pdf
-from app.rag.chunker import chunk_text
-from app.rag.vector_store import VectorStore
+from app.rag.chunker import chunk_pages
 
 
-PDF_PATH = "DSA_Full_Notes_BTech_CSE.pdf"
+def test_chunk_pages():
+    pages = [
+        {
+            "page": 1,
+            "text": (
+                "Arrays store elements in contiguous memory. "
+                "Array indexing provides fast access to elements."
+            ),
+        },
+        {
+            "page": 2,
+            "text": (
+                "Binary search works on sorted data. "
+                "It repeatedly divides the search space."
+            ),
+        },
+    ]
 
-
-def main():
-    print("\n========== TUTIVRA RAG TEST ==========\n")
-
-    # -----------------------------------
-    # 1. Load PDF
-    # -----------------------------------
-
-    print("Loading PDF...")
-
-    text = extract_text_from_pdf(PDF_PATH)
-
-    print(f"Extracted characters: {len(text)}")
-
-    # -----------------------------------
-    # 2. Chunk text
-    # -----------------------------------
-
-    print("\nChunking document...")
-
-    chunks = chunk_text(
-        text,
-        chunk_size=500,
-        overlap=50,
+    chunks = chunk_pages(
+        pages,
+        chunk_size=10,
+        overlap=2,
+        source="test.pdf",
     )
 
-    print(f"Total chunks: {len(chunks)}")
+    assert chunks
+    assert len(chunks) > 0
 
-    for i, chunk in enumerate(chunks[:3]):
-        print(f"\n--- Chunk {i + 1} ---")
-        print(chunk[:500])
+    for chunk in chunks:
+        assert "chunk_id" in chunk
+        assert "text" in chunk
+        assert "page" in chunk
+        assert "source" in chunk
 
-    # -----------------------------------
-    # 3. Create vector store
-    # -----------------------------------
+        assert chunk["text"].strip()
+        assert chunk["source"] == "test.pdf"
 
-    print("\nCreating vector store...")
 
-    vector_store = VectorStore()
+def test_chunk_pages_preserves_page_numbers():
+    pages = [
+        {
+            "page": 3,
+            "text": (
+                "Linked lists contain nodes. "
+                "Each node stores data and a reference."
+            ),
+        }
+    ]
 
-    vector_store.add_documents(chunks)
-
-    print("Documents added to FAISS.")
-
-    # -----------------------------------
-    # 4. Test semantic retrieval
-    # -----------------------------------
-
-    query = "Why does binary search require a sorted array?"
-
-    print("\n========== RETRIEVAL TEST ==========")
-
-    print(f"\nQuery:\n{query}")
-
-    results = vector_store.search(
-        query,
-        top_k=3,
+    chunks = chunk_pages(
+        pages,
+        chunk_size=5,
+        overlap=1,
+        source="linked_list.pdf",
     )
 
-    print("\nRelevant chunks:")
+    assert chunks
 
-    for i, result in enumerate(results):
-        print(f"\n--- Result {i + 1} ---")
-        print(result[:1000])
-
-    print("\n========== RAG TEST COMPLETE ==========\n")
-
-
-if __name__ == "__main__":
-    main()
+    for chunk in chunks:
+        assert chunk["page"] == 3
+        assert chunk["source"] == "linked_list.pdf"

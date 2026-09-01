@@ -1,3 +1,5 @@
+import pytest
+
 from app.rag.vector_store import VectorStore
 from app.rag.retriever import Retriever
 
@@ -16,52 +18,79 @@ QUESTIONS = [
 ]
 
 
-def main():
-
-    print()
-    print("========== TUTIVRA RETRIEVAL QUALITY TEST ==========")
-
+@pytest.fixture
+def retriever():
     vector_store = VectorStore()
-    vector_store.load("rag_storage")
 
-    retriever = Retriever(vector_store)
+    vector_store.load(
+        "rag_storage"
+    )
 
-    print(f"\nLoaded documents: {len(vector_store.documents)}")
+    return Retriever(
+        vector_store
+    )
 
-    for number, question in enumerate(QUESTIONS, start=1):
 
-        print()
-        print("=" * 60)
-        print(f"QUESTION {number}")
-        print(question)
-        print("=" * 60)
+@pytest.mark.integration
+def test_retrieval_returns_results(
+    retriever,
+):
+
+    for question in QUESTIONS:
 
         results = retriever.retrieve(
             query=question,
             top_k=3,
         )
 
-        for rank, result in enumerate(results, start=1):
+        assert results
+        assert len(results) <= 3
+
+        for result in results:
+
+            assert "document" in result
+            assert "score" in result
+            assert "distance" in result
 
             document = result["document"]
 
-            print(
-                f"\nRank {rank}"
-                f"\nPage: {document['page']}"
-                f"\nChunk: {document['chunk_id']}"
-                f"\nScore: {result['score']:.4f}"
-                f"\nDistance: {result['distance']:.4f}"
-            )
+            assert "text" in document
+            assert "page" in document
+            assert "chunk_id" in document
 
-            print(
-                f"Text: {document['text'][:180]}..."
-            )
-
-    print()
-    print("=" * 60)
-    print("RETRIEVAL QUALITY TEST COMPLETE")
-    print("=" * 60)
+            assert document["text"].strip()
 
 
-if __name__ == "__main__":
-    main()
+@pytest.mark.integration
+def test_retrieval_result_structure(
+    retriever,
+):
+
+    question = (
+        "Why does binary search require "
+        "a sorted array?"
+    )
+
+    results = retriever.retrieve(
+        query=question,
+        top_k=3,
+    )
+
+    assert results
+
+    first_result = results[0]
+
+    assert isinstance(
+        first_result["score"],
+        (int, float),
+    )
+
+    assert isinstance(
+        first_result["distance"],
+        (int, float),
+    )
+
+    assert isinstance(
+        first_result["document"],
+        dict,
+    )

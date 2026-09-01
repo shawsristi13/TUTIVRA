@@ -1,116 +1,89 @@
+import pytest
+
 from app.rag.document_loader import extract_pages_from_pdf
 from app.rag.chunker import chunk_pages
 from app.rag.vector_store import VectorStore
 from app.rag.retriever import Retriever
 from app.rag.rag_generator import RAGGenerator
 
+
 PDF_PATH = "DSA_Full_Notes_BTech_CSE.pdf"
 
-def main():
 
-    print()
-    print("========== TUTIVRA RAG GENERATION TEST ==========")
+def test_pdf_can_be_loaded():
+    pages = extract_pages_from_pdf(PDF_PATH)
 
-# ------------------------------------------------
-# 1. Load PDF pages
-# ------------------------------------------------
+    assert pages
+    assert len(pages) > 0
 
-print("\nLoading PDF...")
+    for page in pages:
+        assert "page" in page
+        assert "text" in page
+        assert page["text"].strip()
 
-pages = extract_pages_from_pdf(PDF_PATH)
 
-print(f"Pages extracted: {len(pages)}")
+def test_pdf_can_be_chunked():
+    pages = extract_pages_from_pdf(PDF_PATH)
 
-# ------------------------------------------------
-# 2. Create page-aware chunks
-# ------------------------------------------------
-
-print("\nChunking document...")
-
-chunks = chunk_pages(
-    pages,
-    source=PDF_PATH,
-)
-
-print(f"Total chunks: {len(chunks)}")
-
-# ------------------------------------------------
-# 3. Create vector store
-# ------------------------------------------------
-
-print("\nCreating vector store...")
-
-vector_store = VectorStore()
-
-vector_store.add_documents(chunks)
-
-print("Documents added to FAISS.")
-
-# ------------------------------------------------
-# 4. Create retriever
-# ------------------------------------------------
-
-retriever = Retriever(vector_store)
-
-# ------------------------------------------------
-# 5. Create RAG generator
-# ------------------------------------------------
-
-generator = RAGGenerator(retriever)
-
-# ------------------------------------------------
-# 6. Ask question
-# ------------------------------------------------
-
-question = "Why does binary search require a sorted array?"
-
-print("\n========== STUDENT QUESTION ==========")
-print(question)
-
-# ------------------------------------------------
-# 7. Show retrieved sources
-# ------------------------------------------------
-
-print("\nRetrieving relevant study material...")
-
-results = retriever.retrieve(
-    query=question,
-    top_k=3,
-)
-
-print("\n========== RETRIEVED SOURCES ==========")
-
-for i, result in enumerate(results, start=1):
-
-    document = result["document"]
-
-    print(
-        f"\nResult {i}"
-        f"\nPage: {document['page']}"
-        f"\nChunk: {document['chunk_id']}"
-        f"\nScore: {result['score']:.4f}"
-        f"\nDistance: {result['distance']:.4f}"
+    chunks = chunk_pages(
+        pages,
+        source=PDF_PATH,
     )
 
-    print(f"Text: {document['text'][:300]}")
+    assert chunks
+    assert len(chunks) > 0
 
-# ------------------------------------------------
-# 8. Generate grounded answer
-# ------------------------------------------------
+    for chunk in chunks:
+        assert "chunk_id" in chunk
+        assert "text" in chunk
+        assert "page" in chunk
+        assert "source" in chunk
+        assert chunk["text"].strip()
 
-print("\nGenerating grounded answer...")
 
-answer = generator.answer(
-    question=question,
-    top_k=3,
-)
+@pytest.mark.integration
+def test_rag_generation():
+    pages = extract_pages_from_pdf(PDF_PATH)
 
-print("\n========== TUTIVRA ANSWER ==========")
-print(answer)
+    assert pages
 
-print("\n======================================")
-print("RAG GENERATION TEST COMPLETE")
+    chunks = chunk_pages(
+        pages,
+        source=PDF_PATH,
+    )
 
-if __name__ == "__main__":
-    main()
+    assert chunks
 
+    vector_store = VectorStore()
+
+    vector_store.add_documents(chunks)
+
+    assert vector_store.index is not None
+    assert len(vector_store.documents) == len(chunks)
+
+    retriever = Retriever(vector_store)
+
+    question = (
+        "Why does binary search require a sorted array?"
+    )
+
+    results = retriever.retrieve(
+        query=question,
+        top_k=3,
+    )
+
+    assert results
+    assert len(results) <= 3
+
+    generator = RAGGenerator(
+        retriever
+    )
+
+    answer = generator.answer(
+        question=question,
+        top_k=3,
+    )
+
+    assert answer
+    assert isinstance(answer, str)
+    assert len(answer.strip()) > 20
