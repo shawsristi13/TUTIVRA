@@ -4,8 +4,10 @@
 # ============================================================
 
 import sys
-import os
+import inspect
 from pathlib import Path
+
+import streamlit as st
 
 
 # ============================================================
@@ -22,12 +24,24 @@ if str(PROJECT_ROOT) not in sys.path:
 # IMPORTS
 # ============================================================
 
-import streamlit as st
-
 from app.student.student_model import StudentModel
-from app.learning.adaptive_session import AdaptiveLearningSession
-from app.ai.teaching_engine import create_lesson
-from app.ai.question_generator import generate_question
+
+from app.learning.adaptive_session import (
+    AdaptiveLearningSession,
+)
+
+from app.learning.learning_roadmap import (
+    create_learning_roadmap,
+)
+
+from app.ai.teaching_engine import (
+    create_lesson,
+)
+
+from app.ai.question_generator import (
+    generate_question,
+)
+
 from app.adaptation.difficulty_engine import (
     get_adaptation_decision,
 )
@@ -56,8 +70,11 @@ st.set_page_config(
 # ============================================================
 
 DEFAULT_STATE = {
+    # Student
     "student": None,
     "topic": None,
+
+    # Learning
     "learning_session": None,
     "question_data": None,
     "last_result": None,
@@ -69,6 +86,13 @@ DEFAULT_STATE = {
     "rag_filename": "",
     "rag_pages": 0,
     "rag_chunks": 0,
+
+    # Learning Roadmap
+    "learning_roadmap": None,
+    "roadmap_ready": False,
+
+    # Material Answer
+    "rag_answer": None,
 }
 
 
@@ -82,7 +106,10 @@ for key, value in DEFAULT_STATE.items():
 # HELPER FUNCTIONS
 # ============================================================
 
-def create_learning_session(student, topic):
+def create_learning_session(
+    student,
+    topic,
+):
     """
     Create an adaptive learning session.
     """
@@ -95,7 +122,10 @@ def create_learning_session(student, topic):
     )
 
 
-def load_student(name, topic):
+def load_student(
+    name,
+    topic,
+):
     """
     Create StudentModel and load saved progress.
     """
@@ -110,201 +140,6 @@ def load_student(name, topic):
     return student
 
 
-def generate_first_question(student, topic):
-    """
-    Generate the first adaptive question.
-    """
-
-    summary = student.get_summary(topic)
-
-    adaptation = get_adaptation_decision(
-        mastery=summary["mastery"],
-        attempts=summary["attempts"],
-        correct_answers=summary["correct_answers"],
-        misconception_detected=False,
-    )
-
-    material_context = ""
-
-    if st.session_state.get(
-        "rag_ready",
-        False,
-    ):
-
-        material_context = get_material_context(
-            query=f"{topic} core concepts",
-            top_k=5,
-        )
-
-
-    result = generate_question(
-        topic=topic,
-        concept=f"Core concepts of {topic}",
-        student_level=student.level,
-        mastery=summary["mastery"],
-        misconceptions=summary["misconceptions"],
-        difficulty=adaptation["difficulty"],
-        strategy=adaptation["strategy"],
-        question_type=adaptation["question_type"],
-        material_context=material_context,
-    )
-
-    if not isinstance(result, dict):
-        return None
-
-    question = result.get(
-        "question",
-        "",
-    )
-
-    expected_answer = result.get(
-        "expected_answer",
-        "",
-    )
-
-    if not question:
-        return None
-
-    return {
-        "question": question,
-        "expected_answer": expected_answer,
-        "difficulty": adaptation["difficulty"],
-        "strategy": adaptation["strategy"],
-        "question_type": adaptation["question_type"],
-        "reason": adaptation["reason"],
-    }
-
-
-def normalize_next_question(
-    next_question,
-    adaptation,
-):
-    """
-    Convert the adaptive session question
-    into dashboard format.
-    """
-
-    if not next_question:
-        return None
-
-    if not isinstance(
-        next_question,
-        dict,
-    ):
-        return None
-
-    question = next_question.get(
-        "question",
-        "",
-    )
-
-    if not question:
-        return None
-
-    return {
-        "question": question,
-
-        "expected_answer": next_question.get(
-            "expected_answer",
-            "",
-        ),
-
-        "difficulty": (
-            adaptation.get(
-                "difficulty",
-                "adaptive",
-            )
-            if adaptation
-            else "adaptive"
-        ),
-
-        "strategy": (
-            adaptation.get(
-                "strategy",
-                "",
-            )
-            if adaptation
-            else ""
-        ),
-
-        "question_type": (
-            adaptation.get(
-                "question_type",
-                "adaptive",
-            )
-            if adaptation
-            else "adaptive"
-        ),
-
-        "reason": (
-            adaptation.get(
-                "reason",
-                "",
-            )
-            if adaptation
-            else ""
-        ),
-    }
-
-
-def reset_learning_state():
-    """
-    Reset active learning session.
-    Database progress is NOT deleted.
-    """
-
-    st.session_state.learning_session = None
-    st.session_state.question_data = None
-    st.session_state.last_result = None
-    st.session_state.lesson = None
-    st.session_state.started = False
-
-    st.session_state.student = None
-    st.session_state.topic = None
-
-
-def process_pdf(uploaded_file):
-    """
-    Save and process uploaded PDF using RAG.
-    """
-
-    upload_dir = PROJECT_ROOT / "rag_uploads"
-
-    upload_dir.mkdir(
-        parents=True,
-        exist_ok=True,
-    )
-
-    pdf_path = upload_dir / uploaded_file.name
-
-    with open(
-        pdf_path,
-        "wb",
-    ) as file:
-
-        file.write(
-            uploaded_file.getbuffer()
-        )
-
-    result = ingest_document(
-        str(pdf_path)
-    )
-
-    st.session_state.rag_ready = True
-
-    st.session_state.rag_filename = (
-        result["filename"]
-    )
-
-    st.session_state.rag_pages = (
-        result["pages"]
-    )
-
-    st.session_state.rag_chunks = (
-        result["chunks"]
-    )
-
-    return result
 def get_material_context(
     query: str,
     top_k: int = 5,
@@ -356,7 +191,363 @@ def get_material_context(
         )
 
     except Exception:
+
         return ""
+
+
+def process_pdf(
+    uploaded_file,
+):
+    """
+    Save and process uploaded PDF using RAG.
+    """
+
+    upload_dir = (
+        PROJECT_ROOT
+        / "rag_uploads"
+    )
+
+    upload_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    pdf_path = (
+        upload_dir
+        / uploaded_file.name
+    )
+
+    with open(
+        pdf_path,
+        "wb",
+    ) as file:
+
+        file.write(
+            uploaded_file.getbuffer()
+        )
+
+    result = ingest_document(
+        str(pdf_path)
+    )
+
+    st.session_state.rag_ready = True
+
+    st.session_state.rag_filename = (
+        result["filename"]
+    )
+
+    st.session_state.rag_pages = (
+        result["pages"]
+    )
+
+    st.session_state.rag_chunks = (
+        result["chunks"]
+    )
+
+    return result
+
+
+def generate_learning_roadmap(
+    topic: str,
+) -> dict:
+    """
+    Generate a structured learning roadmap
+    from uploaded study material.
+    """
+
+    if not st.session_state.get(
+        "rag_ready",
+        False,
+    ):
+
+        return {
+            "subject": topic,
+            "concepts": [],
+        }
+
+    material_context = get_material_context(
+        query=(
+            f"main concepts topics learning sequence "
+            f"and important chapters for {topic}"
+        ),
+        top_k=10,
+    )
+
+    if not material_context.strip():
+
+        return {
+            "subject": topic,
+            "concepts": [],
+        }
+
+    roadmap = create_learning_roadmap(
+        material_context=material_context,
+        topic=topic,
+    )
+
+    return roadmap
+
+
+def call_generate_question(
+    **kwargs,
+):
+    """
+    Safely call question generator.
+
+    Supports both versions:
+    - Old version without material_context
+    - New RAG-integrated version
+    """
+
+    signature = inspect.signature(
+        generate_question
+    )
+
+    if (
+        "material_context"
+        not in signature.parameters
+    ):
+
+        kwargs.pop(
+            "material_context",
+            None,
+        )
+
+    return generate_question(
+        **kwargs
+    )
+
+
+def call_create_lesson(
+    **kwargs,
+):
+    """
+    Safely call teaching engine.
+
+    Supports both versions:
+    - Old version without material_context
+    - New RAG-integrated version
+    """
+
+    signature = inspect.signature(
+        create_lesson
+    )
+
+    if (
+        "material_context"
+        not in signature.parameters
+    ):
+
+        kwargs.pop(
+            "material_context",
+            None,
+        )
+
+    return create_lesson(
+        **kwargs
+    )
+
+
+def generate_first_question(
+    student,
+    topic,
+):
+    """
+    Generate the first adaptive question.
+    """
+
+    summary = student.get_summary(
+        topic
+    )
+
+    adaptation = get_adaptation_decision(
+        mastery=summary["mastery"],
+        attempts=summary["attempts"],
+        correct_answers=summary[
+            "correct_answers"
+        ],
+        misconception_detected=False,
+    )
+
+    material_context = ""
+
+    if st.session_state.get(
+        "rag_ready",
+        False,
+    ):
+
+        material_context = (
+            get_material_context(
+                query=(
+                    f"{topic} core concepts "
+                    "important definitions and explanations"
+                ),
+                top_k=5,
+            )
+        )
+
+    result = call_generate_question(
+        topic=topic,
+        concept=f"Core concepts of {topic}",
+        student_level=student.level,
+        mastery=summary["mastery"],
+        misconceptions=summary[
+            "misconceptions"
+        ],
+        difficulty=adaptation["difficulty"],
+        strategy=adaptation["strategy"],
+        question_type=adaptation[
+            "question_type"
+        ],
+        material_context=material_context,
+    )
+
+    if not isinstance(
+        result,
+        dict,
+    ):
+
+        return None
+
+    question = result.get(
+        "question",
+        "",
+    )
+
+    expected_answer = result.get(
+        "expected_answer",
+        "",
+    )
+
+    if not question:
+
+        return None
+
+    return {
+        "question": question,
+        "expected_answer": expected_answer,
+        "difficulty": adaptation[
+            "difficulty"
+        ],
+        "strategy": adaptation[
+            "strategy"
+        ],
+        "question_type": adaptation[
+            "question_type"
+        ],
+        "reason": adaptation[
+            "reason"
+        ],
+    }
+
+
+def normalize_next_question(
+    next_question,
+    adaptation,
+):
+    """
+    Convert adaptive session question
+    into dashboard format.
+    """
+
+    if not next_question:
+
+        return None
+
+    if not isinstance(
+        next_question,
+        dict,
+    ):
+
+        return None
+
+    question = next_question.get(
+        "question",
+        "",
+    )
+
+    if not question:
+
+        return None
+
+    return {
+        "question": question,
+
+        "expected_answer": (
+            next_question.get(
+                "expected_answer",
+                "",
+            )
+        ),
+
+        "difficulty": (
+            adaptation.get(
+                "difficulty",
+                "adaptive",
+            )
+            if adaptation
+            else "adaptive"
+        ),
+
+        "strategy": (
+            adaptation.get(
+                "strategy",
+                "",
+            )
+            if adaptation
+            else ""
+        ),
+
+        "question_type": (
+            adaptation.get(
+                "question_type",
+                "adaptive",
+            )
+            if adaptation
+            else "adaptive"
+        ),
+
+        "reason": (
+            adaptation.get(
+                "reason",
+                "",
+            )
+            if adaptation
+            else ""
+        ),
+    }
+
+
+def reset_learning_state():
+    """
+    Reset complete active learning session.
+
+    Database progress is NOT deleted.
+    """
+
+    st.session_state.student = None
+    st.session_state.topic = None
+    st.session_state.learning_session = None
+
+    st.session_state.question_data = None
+    st.session_state.last_result = None
+    st.session_state.lesson = None
+
+    st.session_state.started = False
+
+    # RAG
+    st.session_state.rag_ready = False
+    st.session_state.rag_filename = ""
+    st.session_state.rag_pages = 0
+    st.session_state.rag_chunks = 0
+
+    # Roadmap
+    st.session_state.learning_roadmap = None
+    st.session_state.roadmap_ready = False
+
+    # RAG Answer
+    st.session_state.rag_answer = None
+
 
 # ============================================================
 # CUSTOM CSS
@@ -391,19 +582,11 @@ st.markdown(
         margin-top: 15px;
     }
 
-    .setup-box {
-        padding: 25px;
-        border-radius: 15px;
-        border: 1px solid rgba(128,128,128,0.25);
-        margin-top: 15px;
-        margin-bottom: 20px;
-    }
-
-    .material-box {
-        padding: 20px;
-        border-radius: 12px;
-        border: 1px solid rgba(128,128,128,0.25);
-        margin: 15px 0;
+    .roadmap-concept {
+        padding: 12px;
+        border-radius: 8px;
+        border: 1px solid rgba(128,128,128,0.2);
+        margin-bottom: 10px;
     }
 
     </style>
@@ -435,10 +618,6 @@ st.markdown(
 
 if not st.session_state.started:
 
-    # --------------------------------------------------------
-    # WELCOME
-    # --------------------------------------------------------
-
     st.markdown(
         '<div class="section-title">'
         "Welcome to Tutivra"
@@ -448,9 +627,9 @@ if not st.session_state.started:
 
     st.write(
         """
-        Tutivra is an adaptive AI learning tutor that
-        understands your performance and adjusts your
-        learning experience accordingly.
+        Tutivra adapts your learning experience
+        according to your understanding, performance,
+        and study material.
         """
     )
 
@@ -488,48 +667,39 @@ if not st.session_state.started:
 
     st.write(
         """
-        You can enter a topic, upload your study material,
+        Enter a topic, upload your study material,
         or use both together.
         """
     )
 
-
-    # --------------------------------------------------------
-    # TOPIC
-    # --------------------------------------------------------
-
     entered_topic = st.text_input(
         "Topic",
         placeholder=(
-            "Example: Binary Search, DBMS, Operating Systems..."
+            "Example: Binary Search, DBMS, "
+            "Operating Systems..."
         ),
         key="setup_topic",
     )
 
-
-    st.write("**OR upload your study material**")
-
-
-    # --------------------------------------------------------
-    # PDF UPLOAD
-    # --------------------------------------------------------
+    st.write(
+        "**OR upload your study material**"
+    )
 
     uploaded_file = st.file_uploader(
         "Upload study material",
         type=["pdf"],
         key="setup_pdf",
-        help="Upload lecture notes, textbooks, syllabus material, etc.",
+        help=(
+            "Upload lecture notes, textbooks, "
+            "syllabus material, etc."
+        ),
     )
-
-
-    # --------------------------------------------------------
-    # MATERIAL PREVIEW
-    # --------------------------------------------------------
 
     if uploaded_file is not None:
 
         st.info(
-            f"Selected material: **{uploaded_file.name}**"
+            f"Selected material: "
+            f"**{uploaded_file.name}**"
         )
 
 
@@ -537,7 +707,7 @@ if not st.session_state.started:
 
 
     # ========================================================
-    # WHAT TUTIVRA PROVIDES
+    # LEARNING EXPERIENCE
     # ========================================================
 
     st.markdown(
@@ -549,18 +719,16 @@ if not st.session_state.started:
 
     col1, col2, col3 = st.columns(3)
 
-
     with col1:
 
         st.info(
             """
             ### 🧠 Personalized
 
-            Lessons are generated according
-            to your learning level.
+            Lessons are adapted to your
+            current learning level.
             """
         )
-
 
     with col2:
 
@@ -573,15 +741,14 @@ if not st.session_state.started:
             """
         )
 
-
     with col3:
 
         st.info(
             """
             ### 📖 Material Based
 
-            Ask questions directly from
-            your uploaded study material.
+            Learn directly from your
+            uploaded study material.
             """
         )
 
@@ -612,7 +779,6 @@ if not st.session_state.started:
 
             st.stop()
 
-
         if (
             not entered_topic.strip()
             and uploaded_file is None
@@ -635,8 +801,6 @@ if not st.session_state.started:
 
         else:
 
-            # If only PDF was uploaded,
-            # use the filename as the topic.
             topic = Path(
                 uploaded_file.name
             ).stem
@@ -660,11 +824,13 @@ if not st.session_state.started:
             except Exception as error:
 
                 st.error(
-                    "Tutivra could not load your "
-                    "learning profile."
+                    "Tutivra could not load "
+                    "your learning profile."
                 )
 
-                st.exception(error)
+                st.exception(
+                    error
+                )
 
                 st.stop()
 
@@ -700,9 +866,49 @@ if not st.session_state.started:
                         "Tutivra could not process the PDF."
                     )
 
-                    st.exception(error)
+                    st.exception(
+                        error
+                    )
 
                     st.stop()
+
+
+            # ------------------------------------------------
+            # GENERATE ROADMAP
+            # ------------------------------------------------
+
+            with st.spinner(
+                "Tutivra is creating your learning roadmap..."
+            ):
+
+                try:
+
+                    roadmap = (
+                        generate_learning_roadmap(
+                            topic
+                        )
+                    )
+
+                    st.session_state.learning_roadmap = (
+                        roadmap
+                    )
+
+                    st.session_state.roadmap_ready = True
+
+                except Exception as error:
+
+                    st.warning(
+                        "Your study material was processed, "
+                        "but the learning roadmap could not "
+                        "be generated."
+                    )
+
+                    st.caption(
+                        str(error)
+                    )
+
+                    st.session_state.learning_roadmap = None
+                    st.session_state.roadmap_ready = False
 
 
         # ----------------------------------------------------
@@ -710,7 +916,6 @@ if not st.session_state.started:
         # ----------------------------------------------------
 
         st.session_state.student = student
-
         st.session_state.topic = topic
 
         st.session_state.learning_session = (
@@ -723,6 +928,8 @@ if not st.session_state.started:
         st.session_state.question_data = None
         st.session_state.last_result = None
         st.session_state.lesson = None
+        st.session_state.rag_answer = None
+
         st.session_state.started = True
 
         st.rerun()
@@ -732,21 +939,34 @@ if not st.session_state.started:
 
 
 # ============================================================
+# ACTIVE STUDENT
+# ============================================================
+
+student = st.session_state.student
+
+topic = st.session_state.topic
+
+summary = student.get_summary(
+    topic
+)
+
+
+# ============================================================
 # SIDEBAR
 # ============================================================
 
 with st.sidebar:
 
-    st.header("📚 Tutivra")
-
-    st.write(
-        f"**Student:** "
-        f"{st.session_state.student.name}"
+    st.header(
+        "📚 Tutivra"
     )
 
     st.write(
-        f"**Topic:** "
-        f"{st.session_state.topic}"
+        f"**Student:** {student.name}"
+    )
+
+    st.write(
+        f"**Topic:** {topic}"
     )
 
     st.divider()
@@ -756,15 +976,9 @@ with st.sidebar:
     # PROGRESS
     # --------------------------------------------------------
 
-    student = st.session_state.student
-
-    current_topic = st.session_state.topic
-
-    summary = student.get_summary(
-        current_topic
+    st.subheader(
+        "📊 Your Progress"
     )
-
-    st.subheader("📊 Your Progress")
 
     st.metric(
         "Mastery",
@@ -796,7 +1010,9 @@ with st.sidebar:
     # MISCONCEPTIONS
     # --------------------------------------------------------
 
-    if summary["misconceptions"]:
+    if summary[
+        "misconceptions"
+    ]:
 
         st.divider()
 
@@ -814,7 +1030,7 @@ with st.sidebar:
 
 
     # --------------------------------------------------------
-    # STUDY MATERIAL STATUS
+    # STUDY MATERIAL
     # --------------------------------------------------------
 
     if st.session_state.rag_ready:
@@ -856,19 +1072,6 @@ with st.sidebar:
 
 
 # ============================================================
-# ACTIVE STUDENT
-# ============================================================
-
-student = st.session_state.student
-
-topic = st.session_state.topic
-
-summary = student.get_summary(
-    topic
-)
-
-
-# ============================================================
 # MAIN TOPIC HEADER
 # ============================================================
 
@@ -886,8 +1089,9 @@ st.caption(
 # PROGRESS HEADER
 # ============================================================
 
-progress1, progress2, progress3 = st.columns(3)
-
+progress1, progress2, progress3 = (
+    st.columns(3)
+)
 
 with progress1:
 
@@ -896,14 +1100,12 @@ with progress1:
         f"{summary['mastery']:.1f}%",
     )
 
-
 with progress2:
 
     st.metric(
         "Attempts",
         summary["attempts"],
     )
-
 
 with progress3:
 
@@ -934,6 +1136,7 @@ st.markdown(
     "## 📖 Study Material"
 )
 
+
 if st.session_state.rag_ready:
 
     st.success(
@@ -941,7 +1144,9 @@ if st.session_state.rag_ready:
         f"{st.session_state.rag_filename}"
     )
 
-    material_col1, material_col2 = st.columns(2)
+    material_col1, material_col2 = (
+        st.columns(2)
+    )
 
     with material_col1:
 
@@ -971,17 +1176,102 @@ else:
 
 
 # ============================================================
+# LEARNING ROADMAP
+# ============================================================
+
+if (
+    st.session_state.roadmap_ready
+    and st.session_state.learning_roadmap
+):
+
+    st.divider()
+
+    st.markdown(
+        "## 🗺️ Your Learning Roadmap"
+    )
+
+    roadmap = (
+        st.session_state.learning_roadmap
+    )
+
+    concepts = roadmap.get(
+        "concepts",
+        [],
+    )
+
+    if concepts:
+
+        st.write(
+            "Tutivra identified the following "
+            "learning sequence from your material."
+        )
+
+        for index, concept in enumerate(
+            concepts,
+            start=1,
+        ):
+
+            if isinstance(
+                concept,
+                dict,
+            ):
+
+                concept_name = (
+                    concept.get(
+                        "concept",
+                        concept.get(
+                            "name",
+                            f"Concept {index}",
+                        ),
+                    )
+                )
+
+                description = (
+                    concept.get(
+                        "description",
+                        ""
+                    )
+                )
+
+                st.markdown(
+                    f"### {index}. {concept_name}"
+                )
+
+                if description:
+
+                    st.write(
+                        description
+                    )
+
+            else:
+
+                st.markdown(
+                    f"### {index}. {concept}"
+                )
+
+    else:
+
+        st.info(
+            "Tutivra could not identify a detailed "
+            "concept sequence from this material."
+        )
+
+
+# ============================================================
 # ASK FROM STUDY MATERIAL
 # ============================================================
 
 if st.session_state.rag_ready:
+
+    st.divider()
 
     st.markdown(
         "### 💬 Ask Tutivra"
     )
 
     st.write(
-        "Ask questions based specifically on your uploaded material."
+        "Ask questions specifically based on "
+        "your uploaded study material."
     )
 
     rag_question = st.text_area(
@@ -1019,11 +1309,7 @@ if st.session_state.rag_ready:
                         top_k=3,
                     )
 
-                    st.markdown(
-                        "### 🤖 Tutivra's Answer"
-                    )
-
-                    st.write(
+                    st.session_state.rag_answer = (
                         answer
                     )
 
@@ -1039,11 +1325,23 @@ if st.session_state.rag_ready:
                     )
 
 
+    if st.session_state.rag_answer:
+
+        st.markdown(
+            "### 🤖 Tutivra's Answer"
+        )
+
+        st.write(
+            st.session_state.rag_answer
+        )
+
+
 # ============================================================
 # PERSONALIZED LESSON
 # ============================================================
 
 st.divider()
+
 
 with st.expander(
     "🧠 Personalized Lesson",
@@ -1068,30 +1366,33 @@ with st.expander(
 
                 material_context = ""
 
-                if st.session_state.get(
-                    "rag_ready",
-                    False,
-                ):
+                if st.session_state.rag_ready:
 
-                    material_context = get_material_context(
-                        query=f"{topic} concepts explanation",
-                        top_k=5,
+                    material_context = (
+                        get_material_context(
+                            query=(
+                                f"{topic} concepts "
+                                "explanation examples"
+                            ),
+                            top_k=5,
+                        )
                     )
 
-
-                lesson = create_lesson(
+                lesson = call_create_lesson(
                     topic=topic,
                     level=student.level,
                     language="English",
                     goal=(
                         f"Understand {topic}, "
-                        "solve basic problems, and "
+                        "solve practice problems, and "
                         "build a strong conceptual foundation."
                     ),
                     material_context=material_context,
                 )
 
-                st.session_state.lesson = lesson
+                st.session_state.lesson = (
+                    lesson
+                )
 
             except Exception as error:
 
@@ -1112,212 +1413,14 @@ with st.expander(
 
 
 # ============================================================
-# GENERATE FIRST QUESTION
-# ============================================================
-
-if st.session_state.question_data is None:
-
-    st.divider()
-
-    st.markdown(
-        "## 🎯 Adaptive Practice"
-    )
-
-    st.write(
-        """
-        Tutivra selects the difficulty based on
-        your current mastery and learning history.
-        """
-    )
-
-    if st.button(
-        "Generate Question",
-        type="primary",
-        use_container_width=True,
-        key="generate_question",
-    ):
-
-        with st.spinner(
-            "Tutivra is generating an adaptive question..."
-        ):
-
-            try:
-
-                question_data = (
-                    generate_first_question(
-                        student,
-                        topic,
-                    )
-                )
-
-            except Exception as error:
-
-                question_data = None
-
-                st.error(
-                    "Tutivra could not generate a question."
-                )
-
-                st.exception(error)
-
-
-        if question_data:
-
-            st.session_state.question_data = (
-                question_data
-            )
-
-            st.session_state.last_result = None
-
-            st.rerun()
-
-        else:
-
-            st.error(
-                "The AI returned an invalid question. "
-                "Please try again."
-            )
-
-    st.stop()
-
-
-# ============================================================
-# CURRENT QUESTION
-# ============================================================
-
-question_data = (
-    st.session_state.question_data
-)
-
-question = question_data.get(
-    "question",
-    "",
-)
-
-difficulty = question_data.get(
-    "difficulty",
-    "adaptive",
-)
-
-question_type = question_data.get(
-    "question_type",
-    "adaptive",
-)
-
-
-st.divider()
-
-st.markdown(
-    "## ❓ Your Question"
-)
-
-
-q1, q2 = st.columns(2)
-
-
-with q1:
-
-    st.caption(
-        f"Difficulty: **{difficulty}**"
-    )
-
-
-with q2:
-
-    st.caption(
-        f"Question type: **{question_type}**"
-    )
-
-
-st.markdown(
-    f"""
-    <div class="question-box">
-        <h3>{question}</h3>
-    </div>
-    """,
-    unsafe_allow_html=True,
-)
-
-
-# ============================================================
-# ANSWER FORM
-# ============================================================
-
-with st.form(
-    key="answer_form",
-    clear_on_submit=False,
-):
-
-    student_answer = st.text_area(
-        "Your answer",
-        height=180,
-        placeholder=(
-            "Explain your answer in your own words..."
-        ),
-    )
-
-    submitted = st.form_submit_button(
-        "Submit Answer",
-        type="primary",
-        use_container_width=True,
-    )
-
-
-# ============================================================
-# PROCESS ANSWER
-# ============================================================
-
-if submitted:
-
-    if not student_answer.strip():
-
-        st.warning(
-            "Please write an answer before submitting."
-        )
-
-    else:
-
-        with st.spinner(
-            "Tutivra is evaluating your answer..."
-        ):
-
-            try:
-
-                result = (
-                    st.session_state.learning_session
-                    .process_answer(
-                        question=question,
-                        expected_answer=question_data.get(
-                            "expected_answer",
-                            "",
-                        ),
-                        student_answer=student_answer,
-                    )
-                )
-
-                st.session_state.last_result = result
-
-                st.session_state.question_data = None
-
-                st.rerun()
-
-            except Exception as error:
-
-                st.error(
-                    "Tutivra encountered an error "
-                    "while processing your answer."
-                )
-
-                st.exception(error)
-
-
-# ============================================================
 # EVALUATION RESULT
 # ============================================================
 
 if st.session_state.last_result:
 
-    result = st.session_state.last_result
+    result = (
+        st.session_state.last_result
+    )
 
     evaluation = result.get(
         "evaluation",
@@ -1339,7 +1442,6 @@ if st.session_state.last_result:
         None,
     )
 
-
     st.divider()
 
     st.markdown(
@@ -1354,7 +1456,6 @@ if st.session_state.last_result:
     correct = evaluation.get(
         "correct"
     )
-
 
     if correct is True:
 
@@ -1441,8 +1542,9 @@ if st.session_state.last_result:
         "## 📈 Updated Progress"
     )
 
-
-    old_mastery = summary["mastery"]
+    old_mastery = summary[
+        "mastery"
+    ]
 
     new_mastery = student_state.get(
         "mastery",
@@ -1454,9 +1556,7 @@ if st.session_state.last_result:
         - old_mastery
     )
 
-
     m1, m2, m3 = st.columns(3)
-
 
     with m1:
 
@@ -1465,7 +1565,6 @@ if st.session_state.last_result:
             f"{new_mastery:.1f}%",
             delta=f"{delta:+.1f}%",
         )
-
 
     with m2:
 
@@ -1476,7 +1575,6 @@ if st.session_state.last_result:
                 0,
             ),
         )
-
 
     with m3:
 
@@ -1510,9 +1608,7 @@ if st.session_state.last_result:
             "## 🤖 Tutivra Adapted"
         )
 
-
         a1, a2, a3 = st.columns(3)
-
 
         with a1:
 
@@ -1527,7 +1623,6 @@ if st.session_state.last_result:
                 )
             )
 
-
         with a2:
 
             st.write(
@@ -1540,7 +1635,6 @@ if st.session_state.last_result:
                     "continue",
                 )
             )
-
 
         with a3:
 
@@ -1579,7 +1673,6 @@ if st.session_state.last_result:
         )
     )
 
-
     if normalized_next:
 
         st.divider()
@@ -1589,10 +1682,9 @@ if st.session_state.last_result:
         )
 
         st.write(
-            "Tutivra has selected your next question "
-            "based on this answer."
+            "Tutivra selected your next question "
+            "based on your previous answer."
         )
-
 
         if st.button(
             "➡️ Next Question",
@@ -1609,12 +1701,230 @@ if st.session_state.last_result:
 
             st.rerun()
 
-
     else:
 
-        st.info(
-            "Tutivra does not have another question ready yet."
+        if st.button(
+            "Generate Another Question",
+            type="primary",
+            use_container_width=True,
+            key="generate_after_evaluation",
+        ):
+
+            st.session_state.last_result = None
+            st.session_state.question_data = None
+
+            st.rerun()
+
+
+# ============================================================
+# GENERATE FIRST QUESTION
+# ============================================================
+
+elif (
+    st.session_state.question_data
+    is None
+):
+
+    st.divider()
+
+    st.markdown(
+        "## 🎯 Adaptive Practice"
+    )
+
+    st.write(
+        """
+        Tutivra selects question difficulty based on
+        your current mastery and learning history.
+        """
+    )
+
+    if st.button(
+        "Generate Question",
+        type="primary",
+        use_container_width=True,
+        key="generate_question",
+    ):
+
+        with st.spinner(
+            "Tutivra is generating an adaptive question..."
+        ):
+
+            try:
+
+                question_data = (
+                    generate_first_question(
+                        student,
+                        topic,
+                    )
+                )
+
+            except Exception as error:
+
+                question_data = None
+
+                st.error(
+                    "Tutivra could not generate a question."
+                )
+
+                st.exception(
+                    error
+                )
+
+
+        if question_data:
+
+            st.session_state.question_data = (
+                question_data
+            )
+
+            st.session_state.last_result = None
+
+            st.rerun()
+
+        else:
+
+            st.error(
+                "The AI returned an invalid question. "
+                "Please try again."
+            )
+
+
+# ============================================================
+# CURRENT QUESTION
+# ============================================================
+
+if st.session_state.question_data:
+
+    question_data = (
+        st.session_state.question_data
+    )
+
+    question = question_data.get(
+        "question",
+        "",
+    )
+
+    difficulty = question_data.get(
+        "difficulty",
+        "adaptive",
+    )
+
+    question_type = question_data.get(
+        "question_type",
+        "adaptive",
+    )
+
+
+    st.divider()
+
+    st.markdown(
+        "## ❓ Your Question"
+    )
+
+
+    q1, q2 = st.columns(2)
+
+    with q1:
+
+        st.caption(
+            f"Difficulty: **{difficulty}**"
         )
+
+    with q2:
+
+        st.caption(
+            f"Question type: **{question_type}**"
+        )
+
+
+    st.markdown(
+        f"""
+        <div class="question-box">
+            <h3>{question}</h3>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
+    # ========================================================
+    # ANSWER FORM
+    # ========================================================
+
+    with st.form(
+        key="answer_form",
+        clear_on_submit=False,
+    ):
+
+        student_answer = st.text_area(
+            "Your answer",
+            height=180,
+            placeholder=(
+                "Explain your answer in your own words..."
+            ),
+        )
+
+        submitted = st.form_submit_button(
+            "Submit Answer",
+            type="primary",
+            use_container_width=True,
+        )
+
+
+    # ========================================================
+    # PROCESS ANSWER
+    # ========================================================
+
+    if submitted:
+
+        if not student_answer.strip():
+
+            st.warning(
+                "Please write an answer before submitting."
+            )
+
+        else:
+
+            with st.spinner(
+                "Tutivra is evaluating your answer..."
+            ):
+
+                try:
+
+                    result = (
+                        st.session_state.learning_session
+                        .process_answer(
+                            question=question,
+                            expected_answer=(
+                                question_data.get(
+                                    "expected_answer",
+                                    "",
+                                )
+                            ),
+                            student_answer=student_answer,
+                        )
+                    )
+
+                    st.session_state.last_result = (
+                        result
+                    )
+
+                    st.session_state.question_data = (
+                        None
+                    )
+
+                    st.rerun()
+
+                except Exception as error:
+
+                    st.error(
+                        "Tutivra encountered an error "
+                        "while processing your answer."
+                    )
+
+                    st.exception(
+                        error
+                    )
 
 
 # ============================================================

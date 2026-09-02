@@ -7,15 +7,22 @@ from app.ai.openrouter_client import ask_ai
 def _extract_json(response: str) -> dict:
     """
     Extract JSON from an AI response.
+
+    Handles:
+    - Pure JSON
+    - JSON inside markdown code blocks
+    - Extra text surrounding JSON
     """
 
     response = response.strip()
 
+    # Case 1: Response is already valid JSON
     try:
         return json.loads(response)
     except json.JSONDecodeError:
         pass
 
+    # Case 2: JSON inside markdown code block
     code_block = re.search(
         r"```(?:json)?\s*(\{.*?\})\s*```",
         response,
@@ -23,17 +30,14 @@ def _extract_json(response: str) -> dict:
     )
 
     if code_block:
-        return json.loads(
-            code_block.group(1)
-        )
+        return json.loads(code_block.group(1))
 
+    # Case 3: Find first JSON object
     start = response.find("{")
     end = response.rfind("}")
 
     if start != -1 and end != -1 and end > start:
-        return json.loads(
-            response[start:end + 1]
-        )
+        return json.loads(response[start:end + 1])
 
     raise json.JSONDecodeError(
         "No valid JSON object found in AI response",
@@ -54,10 +58,10 @@ def generate_question(
     material_context: str = "",
 ) -> dict:
     """
-    Generate an adaptive question.
+    Generate one adaptive educational question.
 
-    If material_context is provided, the question is
-    generated using the uploaded study material.
+    If study material context is available,
+    prioritize that material when creating the question.
     """
 
     misconception_text = (
@@ -68,29 +72,23 @@ def generate_question(
 
     if material_context.strip():
 
-        material_instruction = f"""
-UPLOADED STUDY MATERIAL:
-
+        material_section = f"""
+STUDY MATERIAL CONTEXT:
 {material_context}
 
-IMPORTANT MATERIAL RULES:
-- Use the uploaded study material as the primary source.
-- Generate the question from concepts actually present
-  in the material.
-- Do not introduce unrelated concepts.
-- Do not rely on information that contradicts the material.
-- The expected answer must also be supported by the material.
-- You may use your general knowledge only to make the
-  question understandable, not to introduce new content.
+IMPORTANT:
+- Base the question primarily on the provided study material.
+- Do not invent concepts that contradict the material.
+- The question should test understanding of the material.
 """
 
     else:
 
-        material_instruction = """
-No study material has been uploaded.
+        material_section = """
+STUDY MATERIAL CONTEXT:
+No uploaded study material is available.
 
-Generate the question using your general knowledge
-and the provided topic and concept.
+Generate the question using reliable educational knowledge.
 """
 
     prompt = f"""
@@ -122,21 +120,22 @@ TEACHING STRATEGY:
 QUESTION TYPE:
 {question_type}
 
-{material_instruction}
+{material_section}
 
 Your question must:
 - Match the student's current difficulty.
 - Address the given concept.
 - Consider known misconceptions.
 - Be appropriate for the student's level.
-- Test understanding rather than memorization.
+- Test understanding rather than simple memorization.
 - Avoid repeating the exact same question wording.
 - Be clear and unambiguous.
 
 IMPORTANT:
-Return ONLY a JSON object.
+Return ONLY a valid JSON object.
+
 Do NOT use markdown.
-Do NOT use ```json.
+Do NOT use code blocks.
 Do NOT add explanations before or after the JSON.
 
 Use exactly this structure:
@@ -171,6 +170,8 @@ Use exactly this structure:
                     f"Missing field: {field}"
                 )
 
+        for field in required_fields:
+
             if not str(result[field]).strip():
                 raise ValueError(
                     f"Empty field: {field}"
@@ -178,10 +179,7 @@ Use exactly this structure:
 
         return result
 
-    except (
-        json.JSONDecodeError,
-        ValueError,
-    ) as error:
+    except (json.JSONDecodeError, ValueError) as error:
 
         return {
             "question": "",

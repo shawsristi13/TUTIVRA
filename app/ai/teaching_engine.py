@@ -11,38 +11,35 @@ def create_lesson(
     """
     Create a personalized lesson.
 
-    If material_context is provided, the lesson is
-    grounded in the uploaded study material.
+    If uploaded study material is available,
+    the lesson is grounded primarily in that material.
     """
 
     if material_context.strip():
 
-        material_instruction = f"""
-UPLOADED STUDY MATERIAL:
-
+        material_section = f"""
+STUDY MATERIAL CONTEXT:
 {material_context}
 
 IMPORTANT:
-- Base the lesson primarily on the uploaded material.
-- Teach concepts that are actually present in the material.
-- Do not introduce unrelated topics.
-- Keep explanations consistent with the material.
-- You may simplify explanations for the student's level.
+- Base the lesson primarily on the uploaded study material.
+- Do not contradict the provided material.
+- Explain the concepts using the student's current level.
 """
 
     else:
 
-        material_instruction = """
-No study material has been uploaded.
+        material_section = """
+No uploaded study material is available.
 
-Create the lesson using the topic and general
-educational knowledge.
+Use reliable educational knowledge to create the lesson.
 """
 
     prompt = f"""
 You are Tutivra, an adaptive AI teacher.
 
-Your job is to create a personalized lesson for one student.
+Your job is to create a personalized lesson
+for one student.
 
 Student information:
 
@@ -51,28 +48,50 @@ Student information:
 - Preferred language: {language}
 - Learning goal: {goal}
 
-{material_instruction}
+{material_section}
 
-Create a short lesson plan.
+Create a structured and easy-to-understand lesson.
 
 The lesson should contain:
 
-1. Learning objective
-2. Concepts to teach in order
-3. A simple explanation strategy
-4. One real-world analogy
-5. One practice question
-6. One checkpoint question
+## Learning Objective
+
+Clearly explain what the student should understand.
+
+## Concepts to Learn
+
+List the concepts in a logical learning order.
+
+## Explanation
+
+Explain the concepts simply and progressively.
+
+## Real-World Analogy
+
+Use one useful real-world analogy.
+
+## Example
+
+Provide one clear example when appropriate.
+
+## Practice Question
+
+Give one question for the student to solve.
+
+## Checkpoint Question
+
+Ask one short question to verify understanding.
 
 Important:
 
 - Start from the student's current level.
 - Do not unnecessarily introduce advanced concepts.
+- Focus on conceptual understanding.
 - Make the lesson interactive.
-- The teacher should be able to adapt later based on
-  the student's answers.
-
-Return the lesson plan in clear sections.
+- Use clear language.
+- Do not make the lesson unnecessarily long.
+- The lesson should help an adaptive tutor understand
+  what to teach next.
 """
 
     return ask_ai(prompt)

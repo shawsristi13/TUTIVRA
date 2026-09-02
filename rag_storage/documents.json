@@ -1,20 +1,344 @@
 [
   {
     "chunk_id": 0,
-    "text": "HALF SUBTRACTOR CODE=library IEEE; use IEEE.STD_LOGIC_1164.ALL; use IEEE.STD_LOGIC_ARITH.ALL; use IEEE.STD_LOGIC_UNSIGNED.ALL; ---- Uncomment the following library declaration if instantiating ---- any Xilinx primitives in this code. --library UNISIM; --use UNISIM.VComponents.all; entity half_subtractor is Port ( A : in STD_LOGIC; B : in STD_LOGIC; DIFFERENCE : out STD_LOGIC; BORROW : out STD_LOGIC); end half_subtractor; architecture Behavioral of half_subtractor is begin DIFFERENCE <= A xor B; BORROW <= (not A) and B; end Behavioral; FULL SUBTRACTOR CODE= library IEEE; use IEEE.STD_LOGIC_1164.ALL; use IEEE.STD_LOGIC_ARITH.ALL; use IEEE.STD_LOGIC_UNSIGNED.ALL; ---- Uncomment the following library declaration if instantiating ---- any Xilinx primitives in this code. --library UNISIM; --use",
+    "text": "Biological Classification Dr. Debanjana Sengupta Visiting Faculty Department of Biotechnology Sister Nivedita University",
     "page": 1,
-    "source": "half subtractor and full subtractor.pdf"
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
   },
   {
     "chunk_id": 1,
-    "text": "use IEEE.STD_LOGIC_UNSIGNED.ALL; ---- Uncomment the following library declaration if instantiating ---- any Xilinx primitives in this code. --library UNISIM; --use UNISIM.VComponents.all; entity full_subtractor is Port ( A : in STD_LOGIC; B : in STD_LOGIC; Bin : in STD_LOGIC; DIFFERENCE : out STD_LOGIC; BORROW : out STD_LOGIC); end full_adder;",
-    "page": 1,
-    "source": "half subtractor and full subtractor.pdf"
+    "text": "Introduction • Biological classification is the scientific arrangement of organisms into groups. • It helps us identify, study, and understand the relationships between organisms. • Classification is based on similarities and differences in characteristics.",
+    "page": 2,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
   },
   {
     "chunk_id": 2,
-    "text": "architecture Behavioral of full_adder is SIGNAL D1,B1,B2:STD_LOGIC; begin half_subtractor1:ENTITY WORK.half_subtractor PORT MAP(A,B,D1,B1); half_subtractor2:ENTITY WORK.half_subtractor PORT MAP(D1,Bin,DIFFERENCE,B2); BORROW<=B1 or B2; end Behavioral;",
-    "page": 2,
-    "source": "half subtractor and full subtractor.pdf"
+    "text": "Need for Classification • Makes the study of millions of organisms easier. • Helps in identification of organisms. • Shows evolutionary relationships. • Provides a universal system for naming organisms.",
+    "page": 3,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 3,
+    "text": "Important Terms Related to Classification/Taxonomy • Nomenclature: It is the process of giving scientific names (not vernacular or local names) to the organisms. • Classification: It is the process of grouping animals and plants into convenient categories on the basis of certain observable traits. • Identification: It is determination of correct position of an organism in the classification. • Taxonomy: It is the study of the process of classification. • Systemic: This includes the identification, nomenclature and classification of organisms based on various parameters. • New Systematic: This covers systematic studies considering evolutionary relationship including other branches like molecular biology,",
+    "page": 4,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 4,
+    "text": "based on various parameters. • New Systematic: This covers systematic studies considering evolutionary relationship including other branches like molecular biology, cytology, genetics and biochemistry etc.",
+    "page": 4,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 5,
+    "text": "History of Classification • Aristotle: Classified organisms mainly into plants and animals. • Carolus Linnaeus: Developed the two-kingdom system. • R.H. Whittaker: Proposed the five-kingdom classification in 1969. • Modern classification also considers cellular and molecular characteristics.",
+    "page": 5,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 6,
+    "text": "Types of Classification System • Artificial System of Classification: This system based the organisms on the basis of morphological characteristics like floral structure, root modification, leaf venation. This is based upon habits habitats of the organism. This is an arbitrary system. • Natural Classification System: It is based on natural affinities based on homology and comparative study. This is mainly for angiosperm. • Numerical or quantitative classification system or phenetics: This is the numerical methods for the evaluation of the similarities and the differences between the species. • Phylogenetic classification system or cladistics: This is based upon evolutionary relationship and",
+    "page": 6,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 7,
+    "text": "similarities and the differences between the species. • Phylogenetic classification system or cladistics: This is based upon evolutionary relationship and morphological characteristics. • Karyotaxonomy: This system uses the chromosomal information like chromosome number, shape, size and behavior.",
+    "page": 6,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 8,
+    "text": "Types of Classification System (Continued) • Chemotaxonomy: This is based on the information of the production of secondary metabolites. • Experimental Taxonomy: This is based on the information of genetics and breeding experiments. • Biochemical Taxonomy: This is based on the information of the production of various chemical like hormones and pheromones. • New Systematic: This system based on the correlation between evolutionary relationship and parameters like cytology, genetics, molecular biology and biochemistry etc. • Scientific classification of plants is done by International Code of Botanical Nomenclature (ICBN) and for animals by International Code of Zoological Nomenclature (ICZN).",
+    "page": 7,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 9,
+    "text": "Five-Kingdom Classification • The five kingdoms proposed by Whittaker are: • Monera • Protista • Fungi • Plantae • Animalia",
+    "page": 8,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 10,
+    "text": "Kingdom Monera • Includes prokaryotic organisms. • Mostly unicellular. • No true nucleus or membrane-bound organelles. • Examples: Bacteria, Cyanobacteria, Mycoplasma",
+    "page": 9,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 11,
+    "text": "Kingdom Protista • Mostly unicellular eukaryotic organisms. • Mostly found in aquatic environments. • Some are autotrophic, while others are heterotrophic. • Examples: Amoeba, Paramoecium, Euglena",
+    "page": 10,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 12,
+    "text": "Kingdom Fungi • Eukaryotic and mostly multicellular. • Obtain nutrition by absorption. • Cell walls are mainly made of chitin. • Reproduce through spores. • Examples: Yeast, Mushroom, Rhizopus",
+    "page": 11,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 13,
+    "text": "Kingdom Plantae • Multicellular and eukaryotic. • Usually contain chlorophyll. • Perform photosynthesis. • Cell walls are made mainly of cellulose. • Examples: Algae, mosses, ferns, flowering plants",
+    "page": 12,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 14,
+    "text": "Kingdom Animalia • Multicellular and eukaryotic. • No cell wall. • Heterotrophic organisms. • Usually capable of movement. • Examples: Human beings, insects, fish, birds",
+    "page": 13,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 15,
+    "text": "Three-Domain System-Molecular Basis of Classification of Organims • Modern classification commonly recognizes three Domains and six Kingdoms: I. Domain: Bacteria 1. Kingdom Eubacteria: Unicellular and prokaryotic with peptidoglycan. II. Domain: Archaea 2. Kingdom Archaea: Unicellular and prokaryotic without peptidoglycan. III. Domain: Eukarya 3.Kingdom Protista: Unicellular/multicellular and eukaryotic. 4.Kingdom Fungi: Unicellular/multicellular, eukaryotic and decomposers. 5. Kingdom Plantae: Multicellular, eukaryotic and autotrophic 6. Kingdom Animalia: Multicellular, eukaryotic and heterotrophic • This system was proposed by Carl Woese and is based largely on molecular differences, especially ribosomal RNA.",
+    "page": 14,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 16,
+    "text": "Phylogenetic Tree • A phylogenetic tree or evolutionary tree is a branching tree or illustration. It provides the evolutionary relationship between different biological species or their phylogeny. Construction of this tree based on their similarities and dissimilarities of the physical or genetic characteristics. Every life on Earth is part of a single phylogenetic tree which indicates a common ancestry. • It is mainly four types: • Rooted Tree • Unrooted Tree • Bifurcating Tree • Coral of Life",
+    "page": 15,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 17,
+    "text": "Types of Phylogenetic Tree • Rooted Tree: It is a directed tree with a unique node the root is the most recent common ancestor of all the entities at the leaves of the tree. The root node does not have a parent node but serves as the parent of all other nodes in the tree. • Unrooted Tree: Unrooted trees indicate the relatedness of the leaf nodes without making assumptions about ancestry. They do not require the ancestral root. It is generated from rooted ones by simply omitting the root. By contrast, inferring the root of an unrooted tree requires",
+    "page": 16,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 18,
+    "text": "is generated from rooted ones by simply omitting the root. By contrast, inferring the root of an unrooted tree requires some means of identifying ancestry.",
+    "page": 16,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 19,
+    "text": "Types of Phylogenetic Tree • Bifurcating Tree: Rooted and unrooted phylogenetic trees may be either bifurcating or multifurcating. It can be either labeled or unlabeled. A rooted bifurcating tree has two descendants from each interior node and an unrooted bifurcating tree takes the form of an unrooted binary tree, a free tree with exactly three neighbors at each internal node. • Coral of Life: According to Darwin, that the coral may be an applicable symbol than the tree. Phylogenetic corals are useful for providing past and present life.",
+    "page": 17,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 20,
+    "text": "Types of Phylogenetic Tree Bifurcating Tree",
+    "page": 18,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 21,
+    "text": "Exceptional Tree Types • Spindle diagram are used in evolutionary taxonomy and provides the evolution of the vertebrates at class level. • Dendogram is a general name for the diagrammatic representation of a phylogenetic tree. • Cladogram represents a branching pattern . • Phylogram is a phylogenetic tree that has branch spans. • Chronogram is a phylogenetic tree that represents time through its branch spans.",
+    "page": 19,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 22,
+    "text": "Taxonomic Hierarchy • The major taxonomic categories are: • Kingdom → Phylum → Class → Order → Family → Genus → Species • Example: Human Animalia → Chordata → Mammalia → Primates → Hominidae → Homo → Homo sapiens",
+    "page": 20,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 23,
+    "text": "Taxonomic Hierarchy (Continued) • Kingdom: The phyla are grouped into still broader categories called Kingdom. • Phylum: The classes with similar features are grouped into Phylum share very few common characteristics with other phyla. The common characteristics of phylum Chordata are dorsal tubular nervous system. Notochord and the pharyngeal gill slits at some stage of life cycle. Other phyla are Annelida, Arthropoda and Mollusca. • Class: It is a group of related orders. The lizards, birds and cattle belong to class Reptilia, Aves and Mammalia. • Order: It is a higher taxon and is the assemblage of families having similar",
+    "page": 21,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 24,
+    "text": "class Reptilia, Aves and Mammalia. • Order: It is a higher taxon and is the assemblage of families having similar characteristics, however, the common characteristics will be fewer that at family or genus level. In mammals the common order is Primates.",
+    "page": 21,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 25,
+    "text": "Taxonomic Hierarchy • Family: It is the group of closely related genera and has less common characteristics than species or genus rank. • Genus: The genus is an aggregate or a group of closely related species. The Taxon genus has more common characteristics than species or genus rank. • Species: It is the lowest category in basic taxonomic hierarchy and has the maximum common characteristics with other species under the same genus. In Genus Panthera, there are several species.",
+    "page": 22,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 26,
+    "text": "Binomial Nomenclature • Introduced and popularized by Carolus Linnaeus. • Each organism receives a two-part scientific name. • First part = Genus • Second part = specific epithet • Example: Homo sapiens",
+    "page": 23,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 27,
+    "text": "Importance of Classification • Helps organize biological diversity. • Makes identification easier. • Helps scientists communicate using standardized names. • Provides information about evolutionary relationships.",
+    "page": 24,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 28,
+    "text": "Conclusion • Biological classification organizes living organisms based on their characteristics and relationships. • Classification systems have developed from simple groupings to molecular and evolutionary systems. • It is an essential tool for understanding biodiversity.",
+    "page": 25,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 29,
+    "text": "Levels of Ecological Organization • Ecological organization describes how living organisms are arranged from the smallest level to the largest. • Order: • Organism • Population • Community • Ecosystem • Biome • Biosphere",
+    "page": 26,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 30,
+    "text": "Organism • An organism is an individual living thing. • It can be a plant, animal, fungus, bacterium, etc. • Example: one tiger, one mango tree, or one bacterium.",
+    "page": 27,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 31,
+    "text": "Population • A population consists of organisms of the same species living in a particular area. • Members can reproduce with one another. • Example: all tigers living in a particular forest.",
+    "page": 28,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 32,
+    "text": "Community • A community includes different populations living and interacting in the same area. • It includes plants, animals, fungi, and microorganisms. • Example: trees, deer, insects, birds, and fungi in a forest.",
+    "page": 29,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 33,
+    "text": "Ecosystem • An ecosystem includes living organisms and non-living environmental factors. • Biotic factors: plants, animals, microorganisms. • Abiotic factors: water, soil, air, sunlight, temperature. • Example: pond ecosystem.",
+    "page": 30,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 34,
+    "text": "Biome & Biosphere • Biome • A large geographical region with a characteristic climate and organisms. • Examples: desert, tropical rainforest, tundra. • Biosphere • The largest level of ecological organization. • Includes all ecosystems on Earth. • Represents the zone where life exists.",
+    "page": 31,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 35,
+    "text": "Complexity of the Cell • The cell is the basic structural and functional unit of life. • Cells differ in: • Size and shape • Internal organization • Number and type of organelles • Metabolic activities • Specialized functions",
+    "page": 32,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 36,
+    "text": "Prokaryotic vs Eukaryotic Cells Feature Prokaryotic Cell Eukaryotic Cell Nucleus Absent Present DNA Nucleoid region Inside nucleus Organelles No membrane-bound organelles Membrane-bound organelles present Size Generally smaller Generally larger Examples Bacteria, Archaea Plants, animals, fungi, protists",
+    "page": 33,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 37,
+    "text": "Levels of Cellular Organization • Cell → Organelle → Molecular components • Major cellular structures include: • Plasma membrane • Cytoplasm • Nucleus • Mitochondria • Endoplasmic reticulum • Golgi apparatus • Ribosomes • Lysosomes • Cytoskeleton",
+    "page": 34,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 38,
+    "text": "Energy and Carbon Utilization • Energy Sources: • Phototrophs – use light as their source • Chemotrophs – obtain energy from the oxidation of chemical compounds (either organic or inorganic) • Carbon Sources: • Autotrophs – sole or principal biosynthetic carbon source • Heterotrophs – reduced, performed organic molecules from other organisms • Electron Sources: • Lithotrophs – use reduced inorganic substances as their electron source • Organotrophs – extract electrons from organic compounds",
+    "page": 35,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 39,
+    "text": "Major Nutritional Classes (i) Photolithotrophic autotrophs or photoautotrophs or photolithoautotrophs • Source of energy – light energy • Source of electrons – Inorganic hydrogen/electron • Carbon source – CO2 • Example – Algae, purple and green sulphur bacteria and cyanobacteria",
+    "page": 36,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 40,
+    "text": "Major Nutritional Classes (Continued) (ii) Photoorganotrophic heterotrophy or photoorganoheterotrophy • Source of energy – light energy • Source of Electrons – organic hydrogen/electron • Carbon source – organic carbon sources (CO2 may also be used) • Example – Purple and green nonsulfur bacteria (common inhabitants of lakes and streams)",
+    "page": 37,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 41,
+    "text": "Major Nutritional Classes (Continued) (iii) Chemolithotrophic autotrophs or chemolithoautotrophy • Source of energy – Chemical energy source (inorganic) • Source of electrons – Inorganic hydrogen/electron donor • Carbon source – CO2 • Example – Sulfur-oxidizing bacteria, hydrogen bacteria, nitrifying bacteria, iron-oxidizing bacteria",
+    "page": 38,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 42,
+    "text": "Major Nutritional Classes (Continued) (iv) Chemoorganotrophic heterotrophs or chemoorganoheterotrophy • Source energy – Chemical energy source (organic) • Source of electrons – Inorganic hydrogen/electron donor • Carbon source – organic carbon source • Example – Protozoan, fungi, most non-photosynthetic bacteria (including most pathogens)",
+    "page": 39,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 43,
+    "text": "Excretion and Metabolic Waste • According to excretion process and types metabolic waste animals are four types: • Aminotelic or Ammonotelic: The animals excrete amino nitrogen as ammonia. Example – most aquatic species, such as the bony fishes. • Ureotelic: The animals excrete amino nitrogen in the form of urea. Example - most terrestrial animals. • Uricotelic: The animals excrete amino nitrogen as uric acid. Example – birds and reptiles. • Guaniotelic: The animals excrete guanine. Example – Scorpion, spider etc.",
+    "page": 40,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 44,
+    "text": "Habitat • Habitat means the type of natural environment where a particular species of organism survive and can get their important requirements for their life like food, shelter, protection and mates for reproduction.",
+    "page": 41,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 45,
+    "text": "Types of Habitat • Habitat is mainly of two types: Aquatic and Terrestrial • Aquatic: The organisms which grow and live in the water this called aquatic organisms. It may be plant or animals. Aquatic animals and plants have unique features survive in aquatic environment. • Examples- Tape grass and pond weed etc. • Terrestrial: The organisms which grow and live on the land this called terrestrial organism. It may be plants or animals. Terrestrial animals and plants have particular features. Examples- Rubber tree and Teak tree. Smaller plants like sugarcane, rice, cotton and pepper etc.",
+    "page": 42,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 46,
+    "text": "Model Organisms • A model organism is a species that has been widely studied usually because it is easy to maintain and breed in a laboratory setting and has particular experimental advantages. Organisms that have been widely used for research so that a great deal is known about their biology. These organisms have properties that made them excellent research subjects.",
+    "page": 43,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 47,
+    "text": "The General Characteristics of Model Organisms • Relatively easy to grow and maintain a restricted space. • Relatively short generation time (birth-reproduction-birth). • Relatively well understood growth and development. • Relatively easy to provide necessary nutrients for growth. • Closely resemble other organisms or systems.",
+    "page": 44,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 48,
+    "text": "Examples of Model Organisms 1.Mammalian models: • Mouse (Mus musculus) • Rat (Rattus norvegicus) 2. Non-mammalian models • Bacterium (Escherichia coli) • Baker’s or brewer’s yeast (Saccharomyces cerevisiae) • Nematode (Caenorhabditis elegans) • Fruit Fly (Drosophila melanogaster) • Zebra Fish (Danio rerio) 3. Plant model • Arabidopsis thaliana",
+    "page": 45,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 49,
+    "text": "Mammalian model: Mus musculus • Multiply quickly, reproduce as every three weeks. • It has short life span • Mice are cost effective because cheap and easy to look after. • It has 40 chromosomes. • Small genome size consist of about 3,500 million bp and complete genome sequences are known. Genetic manipulation is easy.",
+    "page": 46,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 50,
+    "text": "Non-mammalian models: Bacterium Escherichia coli • It is single celled prokaryotic microorganism. • It has rapid growth rate. • Easy to culture and grow at 37̊C • Generation time very short 20 minutes at 37̊̊C • Genome size 4.6 Mb • Complete DNA sequence are known. • It possess the ability to transfer DNA via bacterial conjugation, transduction and transformation. • Most abundant proteins can be cloned and expressed in this bacteria.",
+    "page": 47,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 51,
+    "text": "Non-mammalian models: Bakers or Brewer’s yeast – Saccharomyces cerevisiae • It is simplest eukaryotic organism that combines many advantages of bacterial with eukaryotic genetics. • Many essential processes are same in yeast and human. • Easy to culture and maintain. • Life cycle is very short. • It has 16 chromosomes, there is a mitochondrial genome and a plasmid, the 2 micrometers circle. • It can be transformed with more than replicating plasmid at a time. • Haploid genome consist of about 12,500 kb and complete genome sequence are known. • Chromosome contain simple centromere and telomere than higher eukaryotes.",
+    "page": 48,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 52,
+    "text": "of about 12,500 kb and complete genome sequence are known. • Chromosome contain simple centromere and telomere than higher eukaryotes. • Efficient system for homologous recombination.",
+    "page": 48,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 53,
+    "text": "Non-mammalian models: Fruit Fly – Drosophila melanogaster • It is 3µm length, lay 750-1500 eggs in her life. Embryo emerges within 24 hours. • Life cycle of the fruit fly takes about 12 days. • Easy to culture and maintain at room temperature. • It has 8 chromosomes. • Small genome size consist of about 175 Mb and complete genome sequence are known. Genetic manipulation is easy. • It has giant salivary chromosome called polytene chromosome.",
+    "page": 49,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 54,
+    "text": "Non-mammalian models: Nematode – Caenorhabditis elegance • It has invariant body plan. • 1mm in length and produce 300 or more offspring in a few days. • Easy and cheap maintenance • Easily growing up. • Genetic manipulation is easy.",
+    "page": 50,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 55,
+    "text": "Plant model: Arabidopsis thaliana • Small plant size, efficient reproduction through self pollination . • Life cycle about 6 weeks from germination to mature seeds. • Large number of offspring produced. • Easy to culture and maintain at room temperature. • Haploid chromosome number is 5. • Small genome size consist of about 135 Mb and complete genome sequence are known. • Genetic manipulation is easy. • Has specific defense mechanism of plant pathogen resistance. • Efficient transformation methods of inserting Agrobacterium tumefaciens.",
+    "page": 51,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
+  },
+  {
+    "chunk_id": 56,
+    "text": "Thank You",
+    "page": 52,
+    "source": "Biological Classification by Dr. Debanjana Sengupta.pdf"
   }
 ]
