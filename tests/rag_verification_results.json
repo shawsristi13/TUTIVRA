@@ -1,0 +1,77 @@
+{
+  "total": 14,
+  "passed": 8,
+  "failed": 6,
+  "results": [
+    {
+      "test": "Pages extracted",
+      "passed": true,
+      "detail": "10 pages found"
+    },
+    {
+      "test": "Meaningful text content",
+      "passed": true,
+      "detail": "14,668 total characters"
+    },
+    {
+      "test": "Page numbers present",
+      "passed": true,
+      "detail": "Pages: [1, 2, 3, 4, 5]..."
+    },
+    {
+      "test": "Chunks created",
+      "passed": true,
+      "detail": "32 chunks created"
+    },
+    {
+      "test": "Chunks have required fields",
+      "passed": true,
+      "detail": "chunk_id, text, page all present"
+    },
+    {
+      "test": "Reasonable chunk sizes",
+      "passed": true,
+      "detail": "avg=88 words, min=24, max=100"
+    },
+    {
+      "test": "No empty chunks",
+      "passed": true,
+      "detail": "0 empty chunks found"
+    },
+    {
+      "test": "Embedding API key present",
+      "passed": false,
+      "detail": "OPENROUTER_API_KEY missing"
+    },
+    {
+      "test": "FAISS index",
+      "passed": false,
+      "detail": "No API key \u2014 skipped"
+    },
+    {
+      "test": "Full ingestion",
+      "passed": false,
+      "detail": "No API key \u2014 skipped"
+    },
+    {
+      "test": "Retrieval relevance",
+      "passed": false,
+      "detail": "No API key \u2014 skipped"
+    },
+    {
+      "test": "Out-of-document handling",
+      "passed": false,
+      "detail": "No API key \u2014 skipped"
+    },
+    {
+      "test": "RAG generation",
+      "passed": false,
+      "detail": "No API key \u2014 skipped"
+    },
+    {
+      "test": "No hardcoded topic detection",
+      "passed": true,
+      "detail": "retriever is topic-agnostic"
+    }
+  ]
+}

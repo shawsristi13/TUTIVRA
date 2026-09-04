@@ -1,0 +1,227 @@
+{
+  "passed": 33,
+  "failed": 9,
+  "skipped": 2,
+  "results": [
+    {
+      "name": ".gitignore exists",
+      "status": "PASS",
+      "detail": ".env is in .gitignore"
+    },
+    {
+      "name": ".env not tracked by git",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": ".env.example has no real keys",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "No hardcoded secrets in source",
+      "status": "PASS",
+      "detail": "Scanned 60 files"
+    },
+    {
+      "name": "llm_client uses os.getenv for keys",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "name": "OpenRouter API",
+      "status": "SKIP",
+      "detail": "OPENROUTER_API_KEY not set"
+    },
+    {
+      "name": "Gemini API",
+      "status": "PASS",
+      "detail": "model=gemini-3.6-flash, response_len=10"
+    },
+    {
+      "name": "Groq API",
+      "status": "PASS",
+      "detail": "response_len=10"
+    },
+    {
+      "name": "At least one LLM provider configured",
+      "status": "PASS",
+      "detail": "Chain: ['gemini', 'groq']"
+    },
+    {
+      "name": "OpenRouter \u2192 Gemini fallback",
+      "status": "SKIP",
+      "detail": "OPENROUTER_API_KEY not set (openrouter not in chain)"
+    },
+    {
+      "name": "Gemini \u2192 Groq fallback",
+      "status": "PASS",
+      "detail": "Fell back to Groq, response_len=7"
+    },
+    {
+      "name": "Non-provider error does not trigger fallback",
+      "status": "PASS",
+      "detail": "ValueError propagated correctly"
+    },
+    {
+      "name": "PDF ingestion",
+      "status": "FAIL",
+      "detail": "OPENROUTER_API_KEY is missing. Check your .env file."
+    },
+    {
+      "name": "Embedding creation",
+      "status": "FAIL",
+      "detail": "OPENROUTER_API_KEY is missing. Check your .env file."
+    },
+    {
+      "name": "Retrieval (direct question)",
+      "status": "FAIL",
+      "detail": "Retriever not loaded \u2014 see Embedding creation failure"
+    },
+    {
+      "name": "Retrieval (different section)",
+      "status": "FAIL",
+      "detail": "Retriever not loaded"
+    },
+    {
+      "name": "Retrieval (paraphrased)",
+      "status": "FAIL",
+      "detail": "Retriever not loaded"
+    },
+    {
+      "name": "Out-of-scope handled",
+      "status": "FAIL",
+      "detail": "Retriever not loaded"
+    },
+    {
+      "name": "LLM grounded in retrieved context",
+      "status": "FAIL",
+      "detail": "OPENROUTER_API_KEY is missing. Check your .env file."
+    },
+    {
+      "name": "Lesson generation",
+      "status": "PASS",
+      "detail": "Generated 3351 chars"
+    },
+    {
+      "name": "Scene planning (LLM)",
+      "status": "PASS",
+      "detail": "3 scenes generated"
+    },
+    {
+      "name": "Visual: equation",
+      "status": "PASS",
+      "detail": "2236 chars HTML"
+    },
+    {
+      "name": "Visual: code",
+      "status": "PASS",
+      "detail": "1470 chars HTML"
+    },
+    {
+      "name": "Visual: bullet_list",
+      "status": "PASS",
+      "detail": "1880 chars HTML"
+    },
+    {
+      "name": "Visual: comparison",
+      "status": "PASS",
+      "detail": "1146 chars HTML"
+    },
+    {
+      "name": "Visual: flowchart",
+      "status": "PASS",
+      "detail": "798 chars HTML"
+    },
+    {
+      "name": "Visual: timeline",
+      "status": "PASS",
+      "detail": "1756 chars HTML"
+    },
+    {
+      "name": "Visual: graph",
+      "status": "PASS",
+      "detail": "1541 chars HTML"
+    },
+    {
+      "name": "Visual: none",
+      "status": "PASS",
+      "detail": "returns empty (correct)"
+    },
+    {
+      "name": "fish-audio-sdk import",
+      "status": "PASS",
+      "detail": "SDK installed"
+    },
+    {
+      "name": "Fish Audio TTS generation",
+      "status": "PASS",
+      "detail": "Audio file: 37728 bytes at C:\\Users\\devku\\Desktop\\Hackathons\\innovation_hacck\\TUTIVRA\\rag_uploads\\tts_cache\\test_tts.mp3"
+    },
+    {
+      "name": "D-ID avatar video generation",
+      "status": "FAIL",
+      "detail": "Error: D-ID talk timed out after 90s"
+    },
+    {
+      "name": "Pipeline: scenes generated",
+      "status": "PASS",
+      "detail": "3 scenes, status=partial"
+    },
+    {
+      "name": "Pipeline: visuals present",
+      "status": "PASS",
+      "detail": "3/3 scenes have visuals"
+    },
+    {
+      "name": "Pipeline: audio generated",
+      "status": "PASS",
+      "detail": "3/3 scenes have audio"
+    },
+    {
+      "name": "Pipeline: avatar videos",
+      "status": "FAIL",
+      "detail": "Errors: ['D-ID create talk failed: 402 Client Error: Payment Required for url: https://api.d-id.com/talks']"
+    },
+    {
+      "name": "Pipeline: narration present",
+      "status": "PASS",
+      "detail": "Scene 1: 'Imagine trying to find a word in a printed dictionary. Inste...'"
+    },
+    {
+      "name": "Question generation",
+      "status": "PASS",
+      "detail": "q='Suppose you are searching for a name in a sorted list of 16 '"
+    },
+    {
+      "name": "Answer evaluation",
+      "status": "PASS",
+      "detail": "correct=False, feedback='You correctly noted that binary search uses O(log n) time, b'"
+    },
+    {
+      "name": "Misconception detection",
+      "status": "PASS",
+      "detail": "misconception='Confusing binary search with linear search, assuming binary '"
+    },
+    {
+      "name": "Assessment generation",
+      "status": "PASS",
+      "detail": "3 questions, 15 marks"
+    },
+    {
+      "name": "Assessment evaluation",
+      "status": "PASS",
+      "detail": "score=5/15, 33%"
+    },
+    {
+      "name": "Learning report generation",
+      "status": "PASS",
+      "detail": "score=66.0%, status=good"
+    },
+    {
+      "name": "Revision plan",
+      "status": "PASS",
+      "detail": "3 steps"
+    }
+  ]
+}

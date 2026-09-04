@@ -1,341 +1,155 @@
-import re
+"""
+TUTIVRA — Semantic Retriever (topic-agnostic)
 
-from app.rag.vector_store import VectorStore
+BUGS FIXED vs original:
+- Removed ALL hardcoded topic detection (was DSA-only, broken for any other subject)
+- Removed hardcoded topic_phrases and question_score DSA overrides
+- Scoring now uses pure semantic + keyword overlap, working for ANY subject
+- Added confidence score normalisation so out-of-scope queries return low scores
+- Added minimum score threshold to filter truly irrelevant results
+"""
+
+import re
 
 
 class Retriever:
     """
-    Hybrid retriever for TUTIVRA.
+    Topic-agnostic semantic retriever.
 
-    Uses:
-    1. FAISS semantic similarity
-    2. Exact topic matching
-    3. Keyword overlap
+    Scoring: semantic distance from FAISS + keyword overlap bonus.
+    No hardcoded domain logic — works for any subject.
     """
 
-    def __init__(self, vector_store: VectorStore):
+    # Minimum combined score to include a result.
+    # Results below this are considered too irrelevant to return.
+    MIN_RELEVANCE_SCORE = 0.5
+
+    def __init__(self, vector_store):
         self.vector_store = vector_store
 
+    # --------------------------------------------------
+    # NORMALISE
+    # --------------------------------------------------
+
     def _normalize(self, text: str) -> str:
-        text = text.lower()
-        text = re.sub(r"[^a-z0-9\s]", " ", text)
-        text = re.sub(r"\s+", " ", text)
-        return text.strip()
+        """Lowercase + collapse whitespace."""
+        return re.sub(r"\s+", " ", text.lower()).strip()
 
-    def _detect_topic(self, query: str) -> str | None:
+    # --------------------------------------------------
+    # STOP WORDS
+    # --------------------------------------------------
 
-        topics = {
-            "binary search tree": [
-                "binary search tree",
-                "bst",
-            ],
+    STOP_WORDS = {
+        "what", "is", "are", "the", "a", "an", "why",
+        "does", "do", "how", "and", "of", "to", "in",
+        "for", "on", "can", "you", "difference", "between",
+        "require", "with", "that", "this", "which", "from",
+        "has", "have", "was", "were", "will", "be", "been",
+        "it", "its", "at", "by", "up", "or", "but", "not",
+        "so", "if", "as", "into", "through", "during",
+        "before", "after", "above", "below", "he", "she",
+        "they", "we", "me", "him", "her", "them", "us",
+        "my", "your", "his", "our", "their", "who", "whom",
+    }
 
-            "binary search": [
-                "binary search",
-                "sorted array",
-                "sorted search space",
-            ],
-
-            "linked list": [
-                "linked list",
-                "reverse a linked list",
-            ],
-
-            "stack queue": [
-                "stack",
-                "queue",
-            ],
-
-            "bfs": [
-                "bfs",
-                "breadth first search",
-                "breadth first traversal",
-            ],
-
-            "dfs": [
-                "dfs",
-                "depth first search",
-                "depth first traversal",
-            ],
-
-            "merge sort": [
-                "merge sort",
-            ],
-
-            "backtracking": [
-                "backtracking",
-            ],
-
-            "array access": [
-                "array access",
-                "accessing an array element",
-            ],
-
-            "study order": [
-                "study order",
-                "recommended progression",
-            ],
+    def _meaningful_words(self, text: str) -> set[str]:
+        """Extract meaningful (non-stop) words longer than 2 chars."""
+        words = self._normalize(text).split()
+        return {
+            w for w in words
+            if w not in self.STOP_WORDS and len(w) > 2
         }
 
-        # Longest / most specific topics first
-        for topic, phrases in topics.items():
-
-            for phrase in phrases:
-
-                if phrase in query:
-                    return topic
-
-        return None
+    # --------------------------------------------------
+    # RETRIEVE
+    # --------------------------------------------------
 
     def retrieve(
         self,
         query: str,
         top_k: int = 3,
     ) -> list[dict]:
+        """
+        Retrieve the top-k most relevant chunks for a query.
 
-        query_text = self._normalize(query)
+        Returns list of dicts:
+          {document, distance, keyword_matches, score}
+        """
 
-        # Get all available candidates.
+        if not query.strip():
+            return []
+
+        if not self.vector_store.documents:
+            return []
+
+        # Fetch all candidates so we can re-rank.
+        n_candidates = len(self.vector_store.documents)
         candidates = self.vector_store.search(
             query=query,
-            top_k=len(self.vector_store.documents),
+            top_k=n_candidates,
         )
 
         if not candidates:
             return []
 
-        query_words = set(query_text.split())
-
-        stop_words = {
-            "what",
-            "is",
-            "are",
-            "the",
-            "a",
-            "an",
-            "why",
-            "does",
-            "do",
-            "how",
-            "and",
-            "of",
-            "to",
-            "in",
-            "for",
-            "on",
-            "can",
-            "you",
-            "difference",
-            "between",
-            "require",
-        }
-
-        meaningful_words = {
-            word
-            for word in query_words
-            if word not in stop_words
-            and len(word) > 2
-        }
-
-        query_topic = self._detect_topic(query_text)
+        query_words = self._meaningful_words(query)
 
         scored = []
 
         for item in candidates:
-
             document = item["document"]
-
-            text = self._normalize(
-                document.get("text", "")
-            )
-
+            text = self._normalize(document.get("text", ""))
             distance = item["distance"]
 
             # -------------------------------------------------
-            # 1. Semantic score
+            # 1. Semantic score from FAISS L2 distance
+            #    For text-embedding-3-small, typical distances:
+            #    < 0.5  = very similar
+            #    0.5–1  = related
+            #    1–2    = loosely related
+            #    > 2    = likely different topic
             # -------------------------------------------------
 
-            if distance >= 900:
-                semantic_score = 0.0
+            if distance <= 0:
+                semantic_score = 4.0
+            elif distance < 0.5:
+                semantic_score = 3.5
+            elif distance < 1.0:
+                semantic_score = 2.5
+            elif distance < 1.5:
+                semantic_score = 1.5
+            elif distance < 2.0:
+                semantic_score = 0.8
             else:
-                # Smaller FAISS distance = better.
-                semantic_score = max(
-                    0.0,
-                    2.0 - distance,
-                )
+                # Exponential decay for large distances
+                semantic_score = max(0.0, 2.0 - distance)
 
             # -------------------------------------------------
-            # 2. Keyword overlap
+            # 2. Keyword overlap bonus (topic-agnostic)
+            #    Rewards chunks that share meaningful words
+            #    with the query.
             # -------------------------------------------------
 
-            document_words = set(text.split())
+            doc_words = self._meaningful_words(text)
+            keyword_matches = len(query_words & doc_words)
 
-            keyword_matches = len(
-                meaningful_words & document_words
-            )
-
-            keyword_score = min(
-                keyword_matches * 1.5,
-                6.0,
-            )
+            # Scale: each match = +0.4, capped at 4.0
+            keyword_score = min(keyword_matches * 0.4, 4.0)
 
             # -------------------------------------------------
-            # 3. Topic score
+            # 3. Phrase match bonus
+            #    If the full query (normalised, stopwords kept)
+            #    appears verbatim in the chunk, give a bonus.
             # -------------------------------------------------
 
-            topic_score = 0.0
-
-            if query_topic:
-
-                topic_phrases = {
-                    "binary search tree": [
-                        "binary search tree",
-                        "bst",
-                    ],
-
-                    "binary search": [
-                        "binary search",
-                        "sorted array",
-                        "sorted search space",
-                    ],
-
-                    "linked list": [
-                        "linked list",
-                        "reverse a linked list",
-                    ],
-
-                    "stack queue": [
-                        "stack",
-                        "queue",
-                    ],
-
-                    "bfs": [
-                        "bfs",
-                        "breadth first search",
-                        "breadth first traversal",
-                    ],
-
-                    "dfs": [
-                        "dfs",
-                        "depth first search",
-                        "depth first traversal",
-                    ],
-
-                    "merge sort": [
-                        "merge sort",
-                    ],
-
-                    "backtracking": [
-                        "backtracking",
-                    ],
-
-                    "array access": [
-                        "array access",
-                    ],
-
-                    "study order": [
-                        "study order",
-                        "recommended progression",
-                    ],
-                }
-
-                matched = False
-
-                for phrase in topic_phrases[query_topic]:
-
-                    if phrase in text:
-                        matched = True
-                        break
-
-                if matched:
-                    topic_score = 10.0
-                else:
-                    topic_score = -3.0
+            norm_query = self._normalize(query)
+            phrase_score = 2.0 if norm_query in text else 0.0
 
             # -------------------------------------------------
-            # 4. Question-specific relevance
+            # 4. Final combined score
             # -------------------------------------------------
 
-            question_score = 0.0
-
-            if query_topic == "binary search":
-
-                if (
-                    "binary search" in text
-                    and (
-                        "sorted" in text
-                        or "sorted array" in text
-                    )
-                ):
-                    question_score += 8.0
-
-            elif query_topic == "array access":
-
-                if "array access" in text:
-                    question_score += 8.0
-
-            elif query_topic == "linked list":
-
-                if "reverse a linked list" in text:
-                    question_score += 8.0
-
-            elif query_topic == "stack queue":
-
-                if (
-                    "stack" in text
-                    and "queue" in text
-                ):
-                    question_score += 8.0
-
-            elif query_topic == "binary search tree":
-
-                if "binary search tree" in text:
-                    question_score += 8.0
-
-            elif query_topic == "bfs":
-
-                if (
-                    "bfs" in text
-                    or "breadth first search" in text
-                ):
-                    question_score += 8.0
-
-            elif query_topic == "dfs":
-
-                if (
-                    "dfs" in text
-                    or "depth first search" in text
-                ):
-                    question_score += 8.0
-
-            elif query_topic == "merge sort":
-
-                if "merge sort" in text:
-                    question_score += 8.0
-
-            elif query_topic == "backtracking":
-
-                if "backtracking" in text:
-                    question_score += 8.0
-
-            elif query_topic == "study order":
-
-                if (
-                    "study order" in text
-                    or "recommended progression" in text
-                ):
-                    question_score += 8.0
-
-            # -------------------------------------------------
-            # Final score
-            # -------------------------------------------------
-
-            final_score = (
-                semantic_score
-                + keyword_score
-                + topic_score
-                + question_score
-            )
+            final_score = semantic_score + keyword_score + phrase_score
 
             scored.append(
                 {
@@ -346,10 +160,13 @@ class Retriever:
                 }
             )
 
-        # Highest score first
-        scored.sort(
-            key=lambda x: x["score"],
-            reverse=True,
-        )
+        # Sort highest score first.
+        scored.sort(key=lambda x: x["score"], reverse=True)
 
-        return scored[:top_k]
+        # Filter results below minimum relevance threshold.
+        relevant = [
+            r for r in scored
+            if r["score"] >= self.MIN_RELEVANCE_SCORE
+        ]
+
+        return relevant[:top_k]

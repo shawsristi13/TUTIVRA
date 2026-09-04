@@ -1,36 +1,15 @@
-import os
+"""
+TUTIVRA — OpenRouter Client (compatibility shim)
 
-from dotenv import load_dotenv
-from openai import OpenAI
+This module is kept for backward compatibility.
+All logic has moved to app.ai.llm_client which implements
+a full OpenRouter → Gemini → Grok fallback chain.
 
+New code should import from app.ai.llm_client directly:
+  from app.ai.llm_client import ask_ai, get_provider_status
+"""
 
-load_dotenv()
+# Re-export everything from the unified LLM client
+from app.ai.llm_client import ask_ai, get_provider_status, LLMError  # noqa: F401
 
-api_key = os.getenv("OPENROUTER_API_KEY")
-
-if not api_key:
-    raise ValueError(
-        "OPENROUTER_API_KEY is missing. "
-        "Check your .env file."
-    )
-
-
-client = OpenAI(
-    base_url="https://openrouter.ai/api/v1",
-    api_key=api_key,
-)
-
-
-def ask_ai(prompt: str) -> str:
-
-    response = client.chat.completions.create(
-        model="openrouter/free",
-        messages=[
-            {
-                "role": "user",
-                "content": prompt,
-            }
-        ],
-    )
-
-    return response.choices[0].message.content
+__all__ = ["ask_ai", "get_provider_status", "LLMError"]

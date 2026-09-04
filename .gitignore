@@ -3,3 +3,8 @@
 __pycache__/
 *.pyc
 tutivra.db
+rag_storage/
+rag_uploads/
+*.mp3
+*.pdf
+.pytest_cache/
