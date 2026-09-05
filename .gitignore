@@ -8,3 +8,8 @@ rag_uploads/
 *.mp3
 *.pdf
 .pytest_cache/
+node_modules/
+ui/web/node_modules/
+.next/
+ui/web/.next/
+*.log

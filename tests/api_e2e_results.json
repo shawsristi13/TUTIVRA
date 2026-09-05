@@ -1,7 +1,7 @@
 {
-  "passed": 33,
-  "failed": 9,
-  "skipped": 2,
+  "passed": 34,
+  "failed": 4,
+  "skipped": 0,
   "results": [
     {
       "name": ".gitignore exists",
@@ -30,8 +30,8 @@
     },
     {
       "name": "OpenRouter API",
-      "status": "SKIP",
-      "detail": "OPENROUTER_API_KEY not set"
+      "status": "FAIL",
+      "detail": "Error code: 402 - {'error': {'message': 'This request requires more credits, or fewer max_tokens. Yo"
     },
     {
       "name": "Gemini API",
@@ -46,12 +46,12 @@
     {
       "name": "At least one LLM provider configured",
       "status": "PASS",
-      "detail": "Chain: ['gemini', 'groq']"
+      "detail": "Chain: ['openrouter', 'gemini', 'groq']"
     },
     {
       "name": "OpenRouter \u2192 Gemini fallback",
-      "status": "SKIP",
-      "detail": "OPENROUTER_API_KEY not set (openrouter not in chain)"
+      "status": "PASS",
+      "detail": "Fell back to: groq"
     },
     {
       "name": "Gemini \u2192 Groq fallback",
@@ -65,43 +65,43 @@
     },
     {
       "name": "PDF ingestion",
-      "status": "FAIL",
-      "detail": "OPENROUTER_API_KEY is missing. Check your .env file."
+      "status": "PASS",
+      "detail": "10 pages, 32 chunks"
     },
     {
       "name": "Embedding creation",
-      "status": "FAIL",
-      "detail": "OPENROUTER_API_KEY is missing. Check your .env file."
+      "status": "PASS",
+      "detail": "32 embeddings in FAISS index"
     },
     {
       "name": "Retrieval (direct question)",
-      "status": "FAIL",
-      "detail": "Retriever not loaded \u2014 see Embedding creation failure"
+      "status": "PASS",
+      "detail": "top_score=3.30, preview=': a) freq.put(x, freq.getOrDefault(x, 0) + 1); 9. Searching Linear search Check '"
     },
     {
       "name": "Retrieval (different section)",
-      "status": "FAIL",
-      "detail": "Retriever not loaded"
+      "status": "PASS",
+      "detail": "3 results, score=3.30"
     },
     {
       "name": "Retrieval (paraphrased)",
-      "status": "FAIL",
-      "detail": "Retriever not loaded"
+      "status": "PASS",
+      "detail": "3 results, score=1.90"
     },
     {
       "name": "Out-of-scope handled",
-      "status": "FAIL",
-      "detail": "Retriever not loaded"
+      "status": "PASS",
+      "detail": "Low relevance score: 0.80 (correct)"
     },
     {
       "name": "LLM grounded in retrieved context",
-      "status": "FAIL",
-      "detail": "OPENROUTER_API_KEY is missing. Check your .env file."
+      "status": "PASS",
+      "detail": "answer_len=998 chars"
     },
     {
       "name": "Lesson generation",
       "status": "PASS",
-      "detail": "Generated 3351 chars"
+      "detail": "Generated 3405 chars"
     },
     {
       "name": "Scene planning (LLM)",
@@ -141,7 +141,7 @@
     {
       "name": "Visual: graph",
       "status": "PASS",
-      "detail": "1541 chars HTML"
+      "detail": "1539 chars HTML"
     },
     {
       "name": "Visual: none",
@@ -156,52 +156,22 @@
     {
       "name": "Fish Audio TTS generation",
       "status": "PASS",
-      "detail": "Audio file: 37728 bytes at C:\\Users\\devku\\Desktop\\Hackathons\\innovation_hacck\\TUTIVRA\\rag_uploads\\tts_cache\\test_tts.mp3"
+      "detail": "Audio file: 30528 bytes at C:\\Users\\devku\\Desktop\\Hackathons\\innovation_hacck\\TUTIVRA\\rag_uploads\\tts_cache\\test_tts.mp3"
     },
     {
       "name": "D-ID avatar video generation",
       "status": "FAIL",
-      "detail": "Error: D-ID talk timed out after 90s"
+      "detail": "Error: D-ID create talk failed: 402 Client Error: Payment Required for url: https://api.d-id.com/talks"
     },
     {
-      "name": "Pipeline: scenes generated",
-      "status": "PASS",
-      "detail": "3 scenes, status=partial"
-    },
-    {
-      "name": "Pipeline: visuals present",
-      "status": "PASS",
-      "detail": "3/3 scenes have visuals"
-    },
-    {
-      "name": "Pipeline: audio generated",
-      "status": "PASS",
-      "detail": "3/3 scenes have audio"
-    },
-    {
-      "name": "Pipeline: avatar videos",
+      "name": "Full video pipeline",
       "status": "FAIL",
-      "detail": "Errors: ['D-ID create talk failed: 402 Client Error: Payment Required for url: https://api.d-id.com/talks']"
+      "detail": "All LLM providers failed:\nopenrouter: Error code: 402 - {'error': {'message': 'This request requires"
     },
     {
-      "name": "Pipeline: narration present",
-      "status": "PASS",
-      "detail": "Scene 1: 'Imagine trying to find a word in a printed dictionary. Inste...'"
-    },
-    {
-      "name": "Question generation",
-      "status": "PASS",
-      "detail": "q='Suppose you are searching for a name in a sorted list of 16 '"
-    },
-    {
-      "name": "Answer evaluation",
-      "status": "PASS",
-      "detail": "correct=False, feedback='You correctly noted that binary search uses O(log n) time, b'"
-    },
-    {
-      "name": "Misconception detection",
-      "status": "PASS",
-      "detail": "misconception='Confusing binary search with linear search, assuming binary '"
+      "name": "Q&A loop",
+      "status": "FAIL",
+      "detail": "All LLM providers failed:\nopenrouter: Error code: 402 - {'error': {'message': 'This request requires"
     },
     {
       "name": "Assessment generation",
@@ -211,7 +181,7 @@
     {
       "name": "Assessment evaluation",
       "status": "PASS",
-      "detail": "score=5/15, 33%"
+      "detail": "score=6/15, 40%"
     },
     {
       "name": "Learning report generation",

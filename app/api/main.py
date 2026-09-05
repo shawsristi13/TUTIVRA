@@ -137,6 +137,14 @@ class AdaptiveAnswerRequest(BaseModel):
     expected_answer: str
     student_answer: str
 
+class ReexplainRequest(BaseModel):
+    topic: str
+    concept: str
+    misconception: str
+    student_level: str = "beginner"
+    language: str = "English"
+    material_context: str = ""
+
 class RAGQueryRequest(BaseModel):
     question: str
     top_k: int = 3
@@ -151,7 +159,8 @@ class TTSRequest(BaseModel):
     voice_id: Optional[str] = None
 
 class AvatarRequest(BaseModel):
-    audio_url: Optional[str] = None
+    audio_path: Optional[str] = None   # local file path — uploaded to D-ID
+    audio_url: Optional[str] = None    # only use if already publicly accessible
     script_text: Optional[str] = None
     avatar_id: Optional[str] = None
 
@@ -281,6 +290,8 @@ def create_lesson_endpoint(req: LessonRequest):
             language=req.language,
             goal=req.goal,
             material_context=req.material_context,
+            available_time_minutes=req.available_time_minutes,
+            subject_area=req.subject_area,
         )
         return {"topic": req.topic, "lesson": lesson}
     except Exception as e:
@@ -341,11 +352,12 @@ def tts_endpoint(req: TTSRequest):
             language=req.language,
             voice_id=req.voice_id,
         )
-        # Convert to a relative URL served by /audio/
+        # Convert to a relative URL served by /audio/ — use forward slashes for browser compatibility
         rel_path = Path(audio_path).relative_to(UPLOADS_DIR)
+        audio_url = "/audio/" + rel_path.as_posix()
         return {
             "audio_path": str(audio_path),
-            "audio_url": f"/audio/{rel_path}",
+            "audio_url": audio_url,
         }
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
@@ -359,12 +371,15 @@ def tts_endpoint(req: TTSRequest):
 def avatar_endpoint(req: AvatarRequest):
     """
     Generate avatar video (D-ID).
-    Provide audio_url or script_text.
+    Preferred: provide audio_path (local file) — uploaded to D-ID so their servers can fetch it.
+    Fallback: script_text — D-ID synthesises voice internally.
+    Do NOT pass audio_url pointing to localhost; D-ID cannot reach it.
     """
     try:
         result = generateAvatarVideo(
-            audio_url=req.audio_url,
-            script_text=req.script_text,
+            audio_path=req.audio_path or None,
+            audio_url=req.audio_url or None,
+            script_text=req.script_text or None,
             avatar_id=req.avatar_id,
         )
         return result
@@ -479,9 +494,63 @@ def adaptive_answer_endpoint(req: AdaptiveAnswerRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@app.post("/answer/reexplain")
+def reexplain_endpoint(req: ReexplainRequest):
+    """
+    Generate an alternative re-explanation when a misconception is detected.
+    Returns a new narration + visual suggestion for the frontend to display
+    before presenting the next question.
+    """
+    from app.ai.llm_client import ask_ai
+
+    context_block = (
+        f"\nRELEVANT MATERIAL:\n{req.material_context[:1500]}"
+        if req.material_context.strip()
+        else ""
+    )
+
+    prompt = f"""You are Tutivra, an adaptive AI teacher.
+
+A student studying "{req.topic}" has a misconception about the concept "{req.concept}".
+
+DETECTED MISCONCEPTION: {req.misconception}
+STUDENT LEVEL: {req.student_level}
+LANGUAGE: {req.language}
+{context_block}
+
+Your task: Generate a SHORT alternative re-explanation of "{req.concept}" that:
+1. Directly addresses the specific misconception
+2. Uses a DIFFERENT analogy or approach than before
+3. Is written in {req.language}
+4. Is appropriate for a {req.student_level} student
+5. Ends with a simple check question
+
+Return ONLY a valid JSON object:
+{{
+  "reexplanation": "The full re-explanation text in {req.language} (2-4 sentences)",
+  "analogy": "A single new analogy sentence",
+  "visual_suggestion": "bullet_list OR equation OR diagram OR code OR flowchart OR none",
+  "visual_content": "Content for the visual (if not none)",
+  "check_question": "A simple follow-up question to verify understanding"
+}}
+
+Do NOT include any text before or after the JSON."""
+
+    try:
+        import json, re
+        raw = ask_ai(prompt, temperature=0.5)
+        raw = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.IGNORECASE)
+        raw = re.sub(r"\s*```$", "", raw)
+        data = json.loads(raw)
+        return data
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ════════════════════════════════════════════════════════════
 # ASSESSMENT
 # ════════════════════════════════════════════════════════════
+
 
 @app.post("/assessment/generate")
 def assessment_generate(req: AssessmentRequest):
